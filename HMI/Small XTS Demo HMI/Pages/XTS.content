@@ -1,0 +1,100 @@
+<div id="XTS" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="100" data-tchmi-height="100" data-tchmi-width-unit="%" data-tchmi-height-unit="%">
+<div id="XtsView" data-tchmi-type="TcHmi.XTS.Controls.XtsView" data-tchmi-displaydimensions="false" data-tchmi-height-unit="px" data-tchmi-invertdimensions="false" data-tchmi-layout="SystemView" data-tchmi-left="2" data-tchmi-left-unit="px" data-tchmi-lockpan="true" data-tchmi-lockzoom="true" data-tchmi-movertype="SystemView" data-tchmi-refreshrate="16" data-tchmi-selectionmode="SingleSelection" data-tchmi-showdriveerrors="true" data-tchmi-showdrivewarnings="true" data-tchmi-targetname="Local" data-tchmi-top="2" data-tchmi-top-unit="px" data-tchmi-viewrotation="0" data-tchmi-width-unit="px" data-tchmi-right="2" data-tchmi-bottom="2" data-tchmi-displaystations="false">
+<script data-tchmi-target-attribute="data-tchmi-toolarray" type="application/json">
+[]
+</script>
+<script data-tchmi-target-attribute="data-tchmi-infoimages" type="application/json">
+[]
+</script>
+<script data-tchmi-target-attribute="data-tchmi-parttransformation" type="application/json">
+[]
+</script>
+<script data-tchmi-target-attribute="data-tchmi-transformation" type="application/json">
+[]
+</script>
+<script data-tchmi-target-attribute="data-tchmi-custommoverlayout" type="application/json">
+{
+  "ImageSrcFrontSide": null,
+  "ImageWidthFrontSide": 70,
+  "ImageHeightFrontSide": 126,
+  "XOffsetFrontSide": 0,
+  "YOffsetFrontSide": 0,
+  "ImageSrcBackSide": "",
+  "ImageWidthBackSide": 70,
+  "ImageHeightBackSide": 80,
+  "XOffsetBackSide": 0,
+  "YOffsetBackSide": 0
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-moduleselectioncolor" type="application/json">
+{
+  "color": "Transparent"
+}
+</script>
+<script data-tchmi-target-attribute="data-tchmi-moverselectioncolor" type="application/json">
+{
+  "color": "Transparent"
+}
+</script>
+
+
+<script data-tchmi-target-attribute="data-tchmi-dimensionoptions" type="application/json">
+{
+  "Displacement": 100,
+  "InfoBarThickness": 8,
+  "MarkerThickness": 5,
+  "MarkerSize": 25,
+  "MarkerType": "Tick",
+  "TextPattern": 2,
+  "TextDisplacement": 10,
+  "zIndex": 1200,
+  "InfoBarColor": {
+    "color": "black"
+  },
+  "MarkerColor": {
+    "color": "black"
+  },
+  "TextOptions": {
+    "FontStyle": "Normal",
+    "FontWeight": "Normal",
+    "FontFamily": "",
+    "HorizontalAlignment": "Center",
+    "VerticalAlignment": "Bottom",
+    "FontSize": 20,
+    "Color": {
+      "color": "black"
+    }
+  }
+}
+</script>
+
+
+
+
+
+<script data-tchmi-target-attribute="data-tchmi-trigger" type="application/json">
+[
+  {
+    "event": "XtsView.onAttached",
+    "actions": [
+      {
+        "objectType": "WriteToSymbol",
+        "active": true,
+        "symbolExpression": "%ctrl%XtsView::MoverSelectionColor%/ctrl%",
+        "value": {
+          "objectType": "StaticValue",
+          "valueType": "tchmi:framework#/definitions/SolidColor",
+          "value": {
+            "color": "rgba(28, 155, 229, 0.1960784)"
+          }
+        },
+        "asyncWait": true
+      }
+    ]
+  }
+]
+</script>
+</div>
+</div>
