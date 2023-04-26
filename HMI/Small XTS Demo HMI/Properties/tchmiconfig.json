@@ -52,7 +52,11 @@
       "type": "Stylesheet"
     }
   ],
-  "userControls": [],
+  "userControls": [
+    {
+      "url": "UserControls/UCToggleButton.usercontrol"
+    }
+  ],
   "content": [
     {
       "url": "Pages/EtherCATDiagnostics.content",

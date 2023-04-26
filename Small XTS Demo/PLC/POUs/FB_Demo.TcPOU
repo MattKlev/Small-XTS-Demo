@@ -29,7 +29,15 @@ VAR
 	rtReset : R_TRIG;
 
 	VelocityCycle : ARRAY[0..3] OF LREAL := [1250.0, 1000.0, 750.0, 500.0];
+	
+	TouchPoint0XPos	:LREAL;
+	TouchPoint1XPos	:LREAL;
+	MouseXPos		:LREAL;
+	
+	AtLeastOneMoverSelected	:BOOL;
+	SelectedMovers			:tchmi_framework_definitions_XtsMoverList;
 
+	
 
 	//Power
 	AllAxisEnabled       : BOOL;
@@ -57,6 +65,11 @@ VAR
 
 	CamInM2  : MC_CamIn;
 	CamOutM2 : MC_CamOut;
+	
+	//IO
+	Button     AT %I* : BOOL;
+	GreenLight AT %Q* : BOOL;
+	RedLight   AT %Q* : BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -297,8 +310,6 @@ StopPremisive  := FALSE;
 Reset          := FALSE;
 ResetPremisive := FALSE;
 
-Mode := E_Mode.Auto;
-
 MasterMoveAbs(Axis := Master, Execute := FALSE);
 M1MoveAbs(Axis := Mover1, Execute := FALSE);
 M2MoveAbs(Axis := Mover2, Execute := FALSE);
@@ -332,6 +343,18 @@ ELSE
 END_IF
 
 M_Init := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_MoverSelection" Id="{f141a41a-ff3c-4ab1-822d-f2562f8d5b92}">
+      <Declaration><![CDATA[METHOD M_MoverSelection
+VAR_INPUT
+END_VAR
+VAR_INST
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
     <Method Name="M_Power" Id="{a91e7a0f-58b4-492c-be4e-09cdeda747a4}">
@@ -404,10 +427,21 @@ VAR_INST
 	tonButtonDebounce : TON;
 	rtButton          : R_TRIG;
 	Blink             : BLINK;
+	
+	
+	//Converts the XTS viewer mover selection into a PLC array.
+	//HMI sends a varrying array size of "tchmi_framework_definitions_XtsMoverListItem"
+	fbJsonDataType	:FB_JsonReadWriteDatatype;
+	sSelectedMovers			:STRING(1000);//Bound to by the HMI XtsView control -> Selected mover list
+	sSelectedMoversOld		:STRING(1000);
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[tonButtonDebounce(IN := GVL_IO.Button, PT := T#100MS);
+        <ST><![CDATA[tonButtonDebounce(IN := Button, PT := T#100MS);
 rtButton(CLK := tonButtonDebounce.Q);
+//Set back to auto mode, if using the physical button
+IF rtButton.Q THEN
+	Mode := E_Mode.Auto;
+END_IF
 rtStart(CLK := Start OR (rtButton.Q AND Step = E_Step.Idel));
 rtStop(CLK := Stop OR (rtButton.Q AND Step = E_Step.MoveMasterToEndOfCam) OR (rtButton.Q AND Step = E_Step.MoveMasterToStartOfCam));
 rtReset(CLK := Reset OR (rtButton.Q AND Step = E_Step.Error));
@@ -417,27 +451,35 @@ CASE Step OF
 		StartPremisive  := TRUE;
 		StopPremisive   := FALSE;
 		ResetPremisive  := FALSE;
-		GVL_IO.RedLight := FALSE;
-		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => GVL_IO.GreenLight);
+		RedLight := FALSE;
+		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => GreenLight);
 	E_step.MoveMasterToEndOfCam..E_Step.MoveMasterToStartOfCam:
 		StartPremisive    := FALSE;
 		StopPremisive     := TRUE;
 		ResetPremisive    := FALSE;
-		GVL_IO.GreenLight := TRUE;
-		GVL_IO.RedLight   := FALSE;
+		GreenLight := TRUE;
+		RedLight   := FALSE;
 	E_step.Error:
-		GVL_IO.GreenLight := FALSE;
+		GreenLight := FALSE;
 		ResetPremisive    := TRUE;
 		StopPremisive     := FALSE;
 		StartPremisive    := FALSE;
-		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => GVL_IO.RedLight);
+		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => RedLight);
 ELSE
-	GVL_IO.GreenLight := FALSE;
-	GVL_IO.RedLight   := FALSE;
+	GreenLight := FALSE;
+	RedLight   := FALSE;
 	StopPremisive     := FALSE;
 	StartPremisive    := FALSE;
 	ResetPremisive    := FALSE;
 END_CASE
+
+
+//Mover selection
+IF sSelectedMoversOld<> sSelectedMovers THEN
+	MEMSET(destAddr:=ADR(SelectedMovers),fillByte:=0,n:=SIZEOF(SelectedMovers));
+	fbJsonDataType.SetSymbolFromJson(sSelectedMovers,'tchmi_framework_definitions_XtsMoverList',SIZEOF(SelectedMovers), ADR(SelectedMovers));
+	sSelectedMoversOld:=sSelectedMovers;
+END_IF
 ]]></ST>
       </Implementation>
     </Method>
@@ -456,10 +498,14 @@ END_CASE
       <LineId Id="99" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Init">
-      <LineId Id="382" Count="22" />
+      <LineId Id="382" Count="5" />
+      <LineId Id="390" Count="14" />
       <LineId Id="426" Count="0" />
       <LineId Id="424" Count="1" />
       <LineId Id="405" Count="14" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Demo.M_MoverSelection">
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Power">
@@ -475,7 +521,11 @@ END_CASE
       <LineId Id="22" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_UserInput">
-      <LineId Id="191" Count="31" />
+      <LineId Id="191" Count="1" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="230" Count="2" />
+      <LineId Id="193" Count="29" />
+      <LineId Id="248" Count="7" />
       <LineId Id="97" Count="0" />
     </LineIds>
   </POU>

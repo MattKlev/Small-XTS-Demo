@@ -12,7 +12,7 @@
     <HmiTitle>Please enter your Title...</HmiTitle>
     <HmiVerboseLevel>2</HmiVerboseLevel>
     <HmiVersion>1.0.0.0</HmiVersion>
-    <HmiCommunicationServerPort>3001</HmiCommunicationServerPort>
+    <HmiCommunicationServerPort>3002</HmiCommunicationServerPort>
     <HmiLogTcHmiServerMessages>false</HmiLogTcHmiServerMessages>
     <HmiLogDesignerModeComMessages>false</HmiLogDesignerModeComMessages>
     <HmiServerVersion>Latest</HmiServerVersion>
@@ -22,7 +22,7 @@
     <TargetFramework>native1.12-tchmi</TargetFramework>
     <AzureFunctionsVersion>v2</AzureFunctionsVersion>
     <Name>Small XTS Demo HMI</Name>
-    <HmiCommunicationRouterPort>10100</HmiCommunicationRouterPort>
+    <HmiCommunicationRouterPort>10104</HmiCommunicationRouterPort>
     <HmiCommunicationServerAuthPort>13001</HmiCommunicationServerAuthPort>
     <HmiInitial>1.12.760.34</HmiInitial>
     <HmiRecent>1.12.760.35</HmiRecent>
@@ -105,9 +105,35 @@
   <Target Name="Clean" DependsOnTargets="$(CleanDependsOn)" />
   <Target Name="ReBuild" DependsOnTargets="Clean; Build" />
   <ItemGroup>
+    <Content Include="Images\Buttons\reset_normal.svg">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Images\Buttons\reset_pressed.svg">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Images\Buttons\start_normal.svg">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Images\Buttons\start_pressed.svg">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Images\Buttons\stop_normal.svg">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Images\Buttons\stop_pressed.svg">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="UserControls\UCToggleButton.usercontrol">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="UserControls\UCToggleButton.usercontrol.json">
+      <SubType>Content</SubType>
+      <DependentUpon>UserControls\UCToggleButton.usercontrol</DependentUpon>
+    </Content>
     <Folder Include="Fonts\" />
     <Folder Include="Images" />
     <Folder Include="Images\Manifest" />
+    <Folder Include="Images\Buttons" />
     <Folder Include="Images\PLC\" />
     <Folder Include="Images\TwinCAT\" />
     <Folder Include="Imports" />
@@ -115,6 +141,7 @@
     <Folder Include="Imports\Videos" />
     <Folder Include="KeyboardLayouts\" />
     <Folder Include="Localization" />
+    <Folder Include="UserControls" />
     <Folder Include="Pages\" />
     <Folder Include="Server\ADS\" />
     <Folder Include="Server\TcHmiEcDiagnostics" />
@@ -138,6 +165,9 @@
     <Folder Include="Properties" />
     <Content Include=".eslintrc.json">
       <Visible>false</Visible>
+    </Content>
+    <Content Include="Images\XTS_Logo.jpg">
+      <SubType>Content</SubType>
     </Content>
     <Content Include="Pages\EtherCATDiagnostics.content">
       <SubType>Content</SubType>

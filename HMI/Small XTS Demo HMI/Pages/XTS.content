@@ -1,5 +1,6 @@
 <div id="XTS" data-tchmi-type="TcHmi.Controls.System.TcHmiContent" data-tchmi-top="0" data-tchmi-left="0" data-tchmi-width="100" data-tchmi-height="100" data-tchmi-width-unit="%" data-tchmi-height-unit="%">
-<div id="XtsView" data-tchmi-type="TcHmi.XTS.Controls.XtsView" data-tchmi-displaydimensions="false" data-tchmi-height-unit="px" data-tchmi-invertdimensions="false" data-tchmi-layout="SystemView" data-tchmi-left="2" data-tchmi-left-unit="px" data-tchmi-lockpan="true" data-tchmi-lockzoom="true" data-tchmi-movertype="SystemView" data-tchmi-refreshrate="16" data-tchmi-selectionmode="SingleSelection" data-tchmi-showdriveerrors="true" data-tchmi-showdrivewarnings="true" data-tchmi-targetname="Local" data-tchmi-top="2" data-tchmi-top-unit="px" data-tchmi-viewrotation="0" data-tchmi-width-unit="px" data-tchmi-right="2" data-tchmi-bottom="2" data-tchmi-displaystations="false">
+<div id="TcHmiGrid_XTS" data-tchmi-type="TcHmi.Controls.System.TcHmiGrid" data-tchmi-height-unit="px" data-tchmi-left="2" data-tchmi-left-unit="px" data-tchmi-top="2" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-right="2" data-tchmi-bottom="2">
+<div id="XtsView" data-tchmi-type="TcHmi.XTS.Controls.XtsView" data-tchmi-displaydimensions="false" data-tchmi-height-unit="px" data-tchmi-invertdimensions="false" data-tchmi-layout="SystemView" data-tchmi-left="12" data-tchmi-left-unit="px" data-tchmi-lockpan="true" data-tchmi-lockzoom="true" data-tchmi-movertype="SystemView" data-tchmi-refreshrate="16" data-tchmi-selectionmode="MultiSelection" data-tchmi-showdriveerrors="true" data-tchmi-showdrivewarnings="true" data-tchmi-targetname="Local" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-viewrotation="0" data-tchmi-width-unit="px" data-tchmi-right="12" data-tchmi-bottom="0" data-tchmi-displaystations="false" data-tchmi-grid-row-index="0" data-tchmi-moverselection="%s%PLC1.MAIN.Demo.sSelectedMovers|BindingMode=TwoWay|BindingEvent=onSelectedMoverChanged%/s%">
 <script data-tchmi-target-attribute="data-tchmi-toolarray" type="application/json">
 []
 </script>
@@ -91,10 +92,278 @@
           }
         },
         "asyncWait": true
+      },
+      {
+        "objectType": "Comment",
+        "comment": "captures mouse and touch position, and writes to the PLC"
+      },
+      {
+        "objectType": "JavaScript",
+        "active": false,
+        "sourceLines": [
+          "const canvas = document.getElementById('XtsView');",
+          "",
+          "  let isDragging = false;",
+          "",
+          "  function startDrag() {",
+          "    isDragging = true;",
+          "  }",
+          "",
+          "function moveDrag(event) {",
+          "  if (isDragging) {",
+          "    const x = event.clientX - canvas.getBoundingClientRect().left;",
+          "    const y = event.clientY - canvas.getBoundingClientRect().top;",
+          "",
+          "    const canvasWidth = canvas.clientWidth;",
+          "    const scaleFactor = 500 / canvasWidth;",
+          "",
+          "    const scaledX = x * scaleFactor;",
+          "",
+          "    console.log('Scaled Position:', scaledX, y);",
+          "    ",
+          "\tTcHmi.Symbol.writeEx('%s%PLC1.MAIN.Demo.TouchPoint0XPos%/s%', scaledX, function (data){});",
+          " ",
+          "  }",
+          "}",
+          "",
+          "  function endDrag() {",
+          "    isDragging = false;",
+          "  }",
+          "",
+          "  // Touch events",
+          "  canvas.addEventListener('touchstart', (event) => {",
+          "    event.preventDefault();",
+          "    startDrag();",
+          "  });",
+          "",
+          "  canvas.addEventListener('touchmove', (event) => {",
+          "    event.preventDefault();",
+          "    moveDrag(event.touches[0]);",
+          "  });",
+          "",
+          "  canvas.addEventListener('touchend', (event) => {",
+          "    event.preventDefault();",
+          "    endDrag();",
+          "  });",
+          "",
+          "  canvas.addEventListener('touchcancel', (event) => {",
+          "    event.preventDefault();",
+          "    endDrag();",
+          "  });",
+          "",
+          "  // Mouse events",
+          "  canvas.addEventListener('mousedown', (event) => {",
+          "    event.preventDefault();",
+          "    startDrag();",
+          "  });",
+          "",
+          "  canvas.addEventListener('mousemove', (event) => {",
+          "    event.preventDefault();",
+          "    moveDrag(event);",
+          "  });",
+          "",
+          "  canvas.addEventListener('mouseup', (event) => {",
+          "    event.preventDefault();",
+          "    endDrag();",
+          "  });",
+          "",
+          "  canvas.addEventListener('mouseleave', (event) => {",
+          "    event.preventDefault();",
+          "    endDrag();",
+          "  });"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
+      },
+      {
+        "objectType": "JavaScript",
+        "active": true,
+        "sourceLines": [
+          "  const canvas = document.getElementById('XtsView');",
+          "  let activeTouches = {};",
+          "",
+          "  function startDrag(identifier, x, y) {",
+          "    activeTouches[identifier] = { x, y };",
+          "  }",
+          "",
+          "  function moveDrag(identifier, x, y) {",
+          "    const canvasWidth = canvas.clientWidth;",
+          "    const scaleFactor = 500 / canvasWidth;",
+          "    const scaledX = parseFloat((x * scaleFactor).toFixed(2));",
+          "",
+          "    console.log(`Position for identifier ${identifier}:`, scaledX, y);",
+          "",
+          "    TcHmi.Symbol.writeEx('%s%PLC1.MAIN.Demo.TouchPoint0XPos%/s%', scaledX, function (data){});",
+          " ",
+          "    activeTouches[identifier] = { x, y };",
+          "  }",
+          "",
+          "  function endDrag(identifier) {",
+          "    delete activeTouches[identifier];",
+          "  }",
+          "",
+          "  // Touch events",
+          "  canvas.addEventListener('touchstart', (event) => {",
+          "    event.preventDefault();",
+          "    for (const touch of event.changedTouches) {",
+          "      const x = touch.clientX - canvas.getBoundingClientRect().left;",
+          "      const y = touch.clientY - canvas.getBoundingClientRect().top;",
+          "      startDrag(touch.identifier, x, y);",
+          "    }",
+          "  });",
+          "",
+          "  canvas.addEventListener('touchmove', (event) => {",
+          "    event.preventDefault();",
+          "    for (const touch of event.changedTouches) {",
+          "      const x = touch.clientX - canvas.getBoundingClientRect().left;",
+          "      const y = touch.clientY - canvas.getBoundingClientRect().top;",
+          "      moveDrag(touch.identifier, x, y);",
+          "    }",
+          "  });",
+          "",
+          "  canvas.addEventListener('touchend', (event) => {",
+          "    event.preventDefault();",
+          "    for (const touch of event.changedTouches) {",
+          "      endDrag(touch.identifier);",
+          "    }",
+          "  });",
+          "",
+          "  canvas.addEventListener('touchcancel', (event) => {",
+          "    event.preventDefault();",
+          "    for (const touch of event.changedTouches) {",
+          "      endDrag(touch.identifier);",
+          "    }",
+          "  });",
+          "",
+          "  // Mouse events",
+          "  const mouseIdentifier = 'mouse';",
+          "  canvas.addEventListener('mousedown', (event) => {",
+          "    event.preventDefault();",
+          "    const x = event.clientX - canvas.getBoundingClientRect().left;",
+          "    const y = event.clientY - canvas.getBoundingClientRect().top;",
+          "    startDrag(mouseIdentifier, x, y);",
+          "  });",
+          "",
+          "  canvas.addEventListener('mousemove', (event) => {",
+          "    event.preventDefault();",
+          "    if (activeTouches[mouseIdentifier]) {",
+          "      const x = event.clientX - canvas.getBoundingClientRect().left;",
+          "      const y = event.clientY - canvas.getBoundingClientRect().top;",
+          "      moveDrag(mouseIdentifier, x, y);",
+          "    }",
+          "  });",
+          "",
+          "  canvas.addEventListener('mouseup', (event) => {",
+          "    event.preventDefault();",
+          "    endDrag(mouseIdentifier);",
+          "  });",
+          "",
+          "  canvas.addEventListener('mouseleave', (event) => {",
+          "    event.preventDefault();",
+          "    endDrag(mouseIdentifier);",
+          "  });"
+        ],
+        "injectContextObject": false,
+        "asyncWait": true,
+        "waitMode": "Synchronous"
       }
     ]
   }
 ]
 </script>
+
+
+</div>
+
+<script data-tchmi-target-attribute="data-tchmi-row-options" type="application/json">
+[
+  {
+    "height": 0.8,
+    "heightUnit": "factor",
+    "heightMode": "Value",
+    "maxHeightUnit": "px",
+    "minHeightUnit": "px",
+    "overflow": false
+  },
+  {
+    "height": 0.2,
+    "heightUnit": "factor",
+    "heightMode": "Value",
+    "maxHeightUnit": "px",
+    "minHeightUnit": "px",
+    "overflow": false
+  }
+]
+</script>
+<div id="TcHmiGrid_XTS_Buttons" data-tchmi-type="TcHmi.Controls.System.TcHmiGrid" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-grid-row-index="1" data-tchmi-right="0" data-tchmi-bottom="0">
+
+<script data-tchmi-target-attribute="data-tchmi-column-options" type="application/json">
+[
+  {
+    "width": 1.0,
+    "widthUnit": "factor",
+    "widthMode": "Value",
+    "maxWidthUnit": "px",
+    "minWidthUnit": "px",
+    "overflow": false
+  },
+  {
+    "width": 1.0,
+    "widthUnit": "factor",
+    "widthMode": "Value",
+    "maxWidthUnit": "px",
+    "minWidthUnit": "px",
+    "overflow": false
+  },
+  {
+    "width": 1.0,
+    "widthUnit": "factor",
+    "widthMode": "Value",
+    "maxWidthUnit": "px",
+    "minWidthUnit": "px",
+    "overflow": false
+  },
+  {
+    "width": 1.0,
+    "widthUnit": "factor",
+    "widthMode": "Value",
+    "maxWidthUnit": "px",
+    "minWidthUnit": "px",
+    "overflow": false
+  },
+  {
+    "width": 1.0,
+    "widthUnit": "factor",
+    "widthMode": "Value",
+    "maxWidthUnit": "px",
+    "minWidthUnit": "px",
+    "overflow": false
+  },
+  {
+    "width": 1.0,
+    "widthUnit": "factor",
+    "widthMode": "Value",
+    "maxWidthUnit": "px",
+    "minWidthUnit": "px",
+    "overflow": false
+  },
+  {
+    "width": 1.0,
+    "widthUnit": "factor",
+    "widthMode": "Value",
+    "maxWidthUnit": "px",
+    "minWidthUnit": "px",
+    "overflow": false
+  }
+]
+</script>
+<div id="StartButton" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-grid-column-index="2" data-tchmi-grid-row-index="0" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-target-user-control="UserControls/UCToggleButton.usercontrol" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-right="0" data-tchmi-bottom="0" data-tchmi-filepathonstate="Images/Buttons/start_pressed.svg" data-tchmi-filepathoffstate="Images/Buttons/start_normal.svg" data-tchmi-buttonpremisive="%s%PLC1.MAIN.Demo.StartPremisive%/s%" data-tchmi-buttonpress="%s%PLC1.MAIN.Demo.Start%/s%">
+</div>
+<div id="StopButton" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-grid-column-index="3" data-tchmi-grid-row-index="0" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-target-user-control="UserControls/UCToggleButton.usercontrol" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-right="0" data-tchmi-bottom="0" data-tchmi-filepathonstate="Images/Buttons/stop_pressed.svg" data-tchmi-filepathoffstate="Images/Buttons/stop_normal.svg" data-tchmi-buttonpress="%s%PLC1.MAIN.Demo.Stop%/s%" data-tchmi-buttonpremisive="%s%PLC1.MAIN.Demo.StopPremisive%/s%">
+</div>
+<div id="ResetButton" data-tchmi-type="TcHmi.Controls.System.TcHmiUserControlHost" data-tchmi-grid-column-index="4" data-tchmi-grid-row-index="0" data-tchmi-height-unit="px" data-tchmi-left="0" data-tchmi-left-unit="px" data-tchmi-target-user-control="UserControls/UCToggleButton.usercontrol" data-tchmi-top="0" data-tchmi-top-unit="px" data-tchmi-width-unit="px" data-tchmi-right="0" data-tchmi-bottom="0" data-tchmi-filepathonstate="Images/Buttons/reset_pressed.svg" data-tchmi-filepathoffstate="Images/Buttons/reset_normal.svg" data-tchmi-buttonpress="%s%PLC1.MAIN.Demo.Reset%/s%" data-tchmi-buttonpremisive="%s%PLC1.MAIN.Demo.ResetPremisive%/s%">
+</div>
+</div>
 </div>
 </div>
