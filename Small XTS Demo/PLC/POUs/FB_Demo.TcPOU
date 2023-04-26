@@ -1,0 +1,421 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Demo" Id="{885b8ba9-974c-4397-956d-318c5f707ab4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Demo
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	Master : AXIS_REF;
+	Mover1 : AXIS_REF;
+	Mover2 : AXIS_REF;
+
+	//Logic vars
+	Step           : E_Step;
+	Cycle         : UINT;
+	
+	//User input
+	Mode           : E_Mode;
+	Start          : BOOL;
+	StartPremisive : BOOL;
+	Stop           : BOOL;
+	StopPremisive  : BOOL;
+	Reset          : BOOL;
+	ResetPremisive : BOOL;
+
+	rtStart : R_TRIG;
+	rtStop  : R_TRIG;
+	rtReset : R_TRIG;
+
+	VelocityCycle : ARRAY[0..3] OF LREAL := [1250.0, 1000.0, 750.0, 500.0];
+
+
+	//Power
+	AllAxisEnabled       : BOOL;
+	AllAxisDisabled      : BOOL;
+	OneOrMoreAxisInError : BOOL;
+	MasterPower          : MC_Power;
+	MasterHault          : MC_Halt;
+	M1Power              : MC_Power;
+	M2Power              : MC_Power;
+
+	//Reset	
+	MasterReset : MC_Reset;
+	M1Reset     : MC_Reset;
+	M2Reset     : MC_Reset;
+
+	// PTP
+	MasterMoveAbs : MC_MoveAbsolute := (Acceleration := 15000.0, Deceleration := 15000.0, Jerk := 30000);
+	MasterSetPos  : MC_SetPosition;
+	M1MoveAbs     : MC_MoveAbsolute;
+	M2MoveAbs     : MC_MoveAbsolute;
+
+	// Camming
+	CamInM1  : MC_CamIn;
+	CamOutM1 : MC_CamOut;
+
+	CamInM2  : MC_CamIn;
+	CamOutM2 : MC_CamOut;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[M_UserInput();
+
+M_Power();
+
+CASE Step OF
+	E_Step.Init:
+		IF M_Init() THEN
+			Step := E_Step.Idel;
+		END_IF
+
+	E_Step.Idel:
+		IF rtStart.Q THEN
+			MasterPower.Enable := TRUE;
+			M1Power.Enable     := TRUE;
+			M2Power.Enable     := TRUE;
+			Step               := E_Step.Enable;
+		END_IF
+
+	E_Step.Enable:
+		IF NOT OneOrMoreAxisInError THEN
+			IF AllAxisEnabled THEN
+				CASE Mode OF
+					E_Mode.Auto:
+						Step := E_Step.MoveMoverstoSafePos;
+					E_Mode.ExternalSetPoint:
+						;
+				END_CASE
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.MoveMoverstoSafePos:
+		M1MoveAbs(Axis := Mover1,
+			Execute    := TRUE,
+			Position   := 60.0,
+			Velocity   := 200.0);
+
+		M2MoveAbs(Axis := Mover2,
+			Execute    := TRUE,
+			Position   := 440.0,
+			Velocity   := 200.0);
+
+		IF NOT M1MoveAbs.Error AND NOT M2MoveAbs.Error THEN
+			IF M1MoveAbs.Done AND M2MoveAbs.Done THEN
+				M1MoveAbs(Axis := Mover1, Execute := FALSE);
+				M2MoveAbs(Axis := Mover2, Execute := FALSE);
+				Step := E_Step.MoveMoversToStartPos;
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.MoveMoversToStartPos:
+		M1MoveAbs(Axis := Mover1,
+			Execute    := TRUE,
+			Position   := 101.1,
+			Velocity   := 200.0);
+
+		M2MoveAbs(Axis := Mover2,
+			Execute    := TRUE,
+			Position   := 190.0,
+			Velocity   := 200.0);
+
+		IF NOT M1MoveAbs.Error AND NOT M2MoveAbs.Error THEN
+			IF M1MoveAbs.Done AND M2MoveAbs.Done THEN
+				M1MoveAbs(Axis := Mover1, Execute := FALSE);
+				M2MoveAbs(Axis := Mover2, Execute := FALSE);
+				Step := E_Step.SetMasterPos;
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.SetMasterPos:
+		MasterSetPos(Axis := Master,
+			Execute       := TRUE,
+			Position      := 0.0,
+			Mode          := FALSE);
+
+		IF NOT MasterSetPos.Error THEN
+			IF MasterSetPos.Done THEN
+				MasterSetPos(Axis := Master, Execute := FALSE);
+				Step := E_Step.CamIn;
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.CamIn:
+		CamInM1(Master    := Master,
+			Slave         := Mover1,
+			Execute       := TRUE,
+			MasterOffset  := 0,
+			SlaveOffset   := 0,
+			MasterScaling := 1,
+			SlaveScaling  := 1,
+			StartMode     := MC_StartMode.MC_STARTMODE_ABSOLUTE,
+			CamTableID    := 1);
+
+		CamInM2(Master    := Master,
+			Slave         := Mover2,
+			Execute       := TRUE,
+			MasterOffset  := 0,
+			SlaveOffset   := 0,
+			MasterScaling := 1,
+			SlaveScaling  := 1,
+			StartMode     := MC_StartMode.MC_STARTMODE_ABSOLUTE,
+			CamTableID    := 2);
+
+		IF NOT CamInM1.Error AND NOT CamInM2.Error THEN
+			IF CamInM1.InSync AND CamInM2.InSync THEN
+				CamInM1(Master := Master, Slave := Mover1, Execute := FALSE);
+				CamInM2(Master := Master, Slave := Mover2, Execute := FALSE);
+				Step := E_Step.MoveMasterToEndOfCam;
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.MoveMasterToEndOfCam:
+		MasterMoveAbs(Axis := Master,
+			Execute        := TRUE,
+			Position       := 20000.0,
+			Velocity       := VelocityCycle[Cycle]);
+
+		IF rtStop.Q THEN
+			Step := E_Step.Stopping;
+		END_IF
+
+		IF NOT MasterMoveAbs.Error THEN
+			IF MasterMoveAbs.Done THEN
+				MasterMoveAbs(Axis := Master, Execute := FALSE);
+				Step := E_Step.MoveMasterToStartOfCam;
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.MoveMasterToStartOfCam:
+		MasterMoveAbs(Axis := Master,
+			Execute        := TRUE,
+			Position       := 0.0,
+			Velocity       := VelocityCycle[Cycle]);
+
+		IF rtStop.Q THEN
+			Step := E_Step.Stopping;
+		END_IF
+
+		IF NOT MasterMoveAbs.Error THEN
+			IF MasterMoveAbs.Done THEN
+				MasterMoveAbs(Axis := Master, Execute := FALSE);
+				Step := E_Step.MoveMasterToEndOfCam;
+
+				IF Cycle = 3 THEN
+					Cycle := 0;
+				ELSE
+					Cycle := Cycle + 1;
+				END_IF
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.Stopping:
+		MasterMoveAbs(Axis := Master, Execute := FALSE);
+		MasterHault(Axis := Master,
+			Execute      := TRUE);
+
+		IF NOT MasterHault.Error THEN
+			IF MasterHault.Done THEN
+				MasterHault(Axis := Master, Execute := FALSE);
+				Step := E_Step.CamOut;
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.CamOut:
+		CamOutM1(Slave := Mover1, Execute := TRUE);
+		CamOutM2(Slave := Mover2, Execute := TRUE);
+
+		IF NOT CamOutM1.Error AND NOT CamOutM2.Error THEN
+			IF CamOutM1.Done AND CamOutM2.Done THEN
+				CamOutM1(Slave := Mover1, Execute := FALSE);
+				CamOutM2(Slave := Mover2, Execute := FALSE);
+				Step := E_Step.Disable;
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.Disable:
+		MasterPower.Enable := FALSE;
+		M1Power.Enable     := FALSE;
+		M2Power.Enable     := FALSE;
+
+		IF NOT OneOrMoreAxisInError THEN
+			IF AllAxisDisabled THEN
+				Step := E_Step.Idel;
+			END_IF
+		ELSE
+			Step := E_Step.Error;
+		END_IF
+
+	E_Step.Error:
+		IF rtReset.Q THEN
+			Step := E_Step.Reset;
+		END_IF
+
+	E_Step.Reset:
+		M_Reset();
+
+		IF NOT OneOrMoreAxisInError THEN
+			Step := E_Step.Init;
+		END_IF
+END_CASE
+
+M_Status();
+]]></ST>
+    </Implementation>
+    <Method Name="M_Init" Id="{257208cf-25b2-41df-bdd8-38f0ee217f4b}">
+      <Declaration><![CDATA[METHOD M_Init : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Start          := FALSE;
+StartPremisive := FALSE;
+Stop           := FALSE;
+StopPremisive  := FALSE;
+Reset          := FALSE;
+ResetPremisive := FALSE;
+
+Mode := E_Mode.Auto;
+
+M1MoveAbs(Axis := Mover1, Execute := FALSE);
+
+MasterReset(Axis := Master, Execute := FALSE);
+
+M1Reset(Axis := Mover1, Execute := FALSE);
+
+M2Reset(Axis := Mover2, Execute := FALSE);
+
+MasterSetPos(Axis := Master, Execute := FALSE);
+
+MasterMoveAbs(Axis := Master, Execute := FALSE);
+
+MasterHault(Axis := Master, Execute := FALSE);
+
+CamInM1(Master := Master, Slave := Mover1, Execute := FALSE);
+CamInM2(Master := Master, Slave := Mover2, Execute := FALSE);
+
+CamOutM1(Slave := Mover1, Execute := FALSE);
+CamOutM2(Slave := Mover2, Execute := FALSE);
+
+M_Init := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Power" Id="{a91e7a0f-58b4-492c-be4e-09cdeda747a4}">
+      <Declaration><![CDATA[METHOD M_Power
+VAR_INPUT
+END_VAR
+VAR_INST
+	OverRide : LREAL := 100.0;
+
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MasterPower(Axis    := Master,
+	Enable_Positive := TRUE,
+	Enable_Negative := TRUE,
+	Override        := OverRide);
+
+M1Power(Axis        := Mover1,
+	Enable_Positive := TRUE,
+	Enable_Negative := TRUE,
+	Override        := 100.0);
+
+M2Power(Axis        := Mover2,
+	Enable_Positive := TRUE,
+	Enable_Negative := TRUE,
+	Override        := 100.0);
+
+AllAxisEnabled := MasterPower.Status AND M1Power.Status AND M2Power.Status;
+
+AllAxisDisabled := NOT MasterPower.Status AND NOT M1Power.Status AND NOT M2Power.Status;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Reset" Id="{04eb2a0c-37f6-4e2b-9118-ec951a876663}">
+      <Declaration><![CDATA[METHOD M_Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MasterReset(Axis := Master,
+	Execute      := Master.Status.Error);
+
+M1Reset(Axis := Mover1,
+	Execute  := Mover1.Status.Error);
+
+M2Reset(Axis := Mover2,
+	Execute  := Mover2.Status.Error);
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_Status" Id="{6d5d68e8-78bd-4242-bd9d-cb4c5e329f39}">
+      <Declaration><![CDATA[METHOD M_Status
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Master.ReadStatus();
+Mover1.ReadStatus();
+Mover2.ReadStatus();
+
+OneOrMoreAxisInError := Master.Status.Error OR Mover1.Status.Error OR Mover2.Status.Error;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="M_UserInput" Id="{c3087039-f600-4463-a24a-4a070ff6bad0}">
+      <Declaration><![CDATA[METHOD M_UserInput
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[rtStart(CLK := Start OR (GVL_IO.Button AND Step = E_Step.Idel));
+rtStop(CLK := Stop OR (GVL_IO.Button AND Step = E_Step.MoveMasterToEndOfCam) OR (GVL_IO.Button AND Step = E_Step.MoveMasterToStartOfCam));
+rtReset(CLK := Reset OR (GVL_IO.Button AND Step = E_Step.Error));]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_Demo">
+      <LineId Id="2298" Count="4" />
+      <LineId Id="2304" Count="213" />
+      <LineId Id="99" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Demo.M_Init">
+      <LineId Id="258" Count="28" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Demo.M_Power">
+      <LineId Id="286" Count="17" />
+      <LineId Id="75" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Demo.M_Reset">
+      <LineId Id="113" Count="7" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Demo.M_Status">
+      <LineId Id="103" Count="4" />
+      <LineId Id="22" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Demo.M_UserInput">
+      <LineId Id="78" Count="1" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

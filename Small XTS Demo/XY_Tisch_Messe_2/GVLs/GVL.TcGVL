@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4018.5">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <GVL Name="GVL" Id="{38cac7d3-aa46-45eb-911e-aeaa0889797a}">
     <Declaration><![CDATA[VAR_GLOBAL
 	bButton 	AT %I* :BOOL;
