@@ -213,7 +213,6 @@ CASE Step OF
 			IF MasterMoveAbs.Done THEN
 				MasterMoveAbs(Axis := Master, Execute := FALSE);
 				Step := E_Step.MoveMasterToEndOfCam;
-
 				IF Cycle = 3 THEN
 					Cycle := 0;
 				ELSE
@@ -223,6 +222,7 @@ CASE Step OF
 		ELSE
 			Step := E_Step.Error;
 		END_IF
+
 
 	E_Step.Stopping:
 		MasterMoveAbs(Axis := Master, Execute := FALSE);
@@ -249,6 +249,8 @@ CASE Step OF
 				Step := E_Step.Disable;
 			END_IF
 		ELSE
+			CamOutM1(Slave := Mover1, Execute := FALSE);
+			CamOutM2(Slave := Mover2, Execute := FALSE);
 			Step := E_Step.Error;
 		END_IF
 
@@ -285,7 +287,8 @@ M_Status();
       <Declaration><![CDATA[METHOD M_Init : BOOL
 VAR_INPUT
 END_VAR
-]]></Declaration>
+VAR_INST
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[Start          := FALSE;
 StartPremisive := FALSE;
@@ -296,17 +299,15 @@ ResetPremisive := FALSE;
 
 Mode := E_Mode.Auto;
 
+MasterMoveAbs(Axis := Master, Execute := FALSE);
 M1MoveAbs(Axis := Mover1, Execute := FALSE);
+M2MoveAbs(Axis := Mover2, Execute := FALSE);
 
 MasterReset(Axis := Master, Execute := FALSE);
-
 M1Reset(Axis := Mover1, Execute := FALSE);
-
 M2Reset(Axis := Mover2, Execute := FALSE);
 
 MasterSetPos(Axis := Master, Execute := FALSE);
-
-MasterMoveAbs(Axis := Master, Execute := FALSE);
 
 MasterHault(Axis := Master, Execute := FALSE);
 
@@ -315,6 +316,20 @@ CamInM2(Master := Master, Slave := Mover2, Execute := FALSE);
 
 CamOutM1(Slave := Mover1, Execute := FALSE);
 CamOutM2(Slave := Mover2, Execute := FALSE);
+
+IF Mover1.Status.Coupled THEN
+	CamOutM1(Slave := Mover1, Execute := TRUE);
+	RETURN;
+ELSE
+	CamOutM1(Slave := Mover1, Execute := FALSE);
+END_IF
+
+IF Mover2.Status.Coupled THEN
+	CamOutM2(Slave := Mover2, Execute := TRUE);
+	RETURN;
+ELSE
+	CamOutM2(Slave := Mover2, Execute := FALSE);
+END_IF
 
 M_Init := TRUE;]]></ST>
       </Implementation>
@@ -385,37 +400,83 @@ OneOrMoreAxisInError := Master.Status.Error OR Mover1.Status.Error OR Mover2.Sta
       <Declaration><![CDATA[METHOD M_UserInput
 VAR_INPUT
 END_VAR
-]]></Declaration>
+VAR_INST
+	tonButtonDebounce : TON;
+	rtButton          : R_TRIG;
+	Blink             : BLINK;
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[rtStart(CLK := Start OR (GVL_IO.Button AND Step = E_Step.Idel));
-rtStop(CLK := Stop OR (GVL_IO.Button AND Step = E_Step.MoveMasterToEndOfCam) OR (GVL_IO.Button AND Step = E_Step.MoveMasterToStartOfCam));
-rtReset(CLK := Reset OR (GVL_IO.Button AND Step = E_Step.Error));]]></ST>
+        <ST><![CDATA[tonButtonDebounce(IN := GVL_IO.Button, PT := T#100MS);
+rtButton(CLK := tonButtonDebounce.Q);
+rtStart(CLK := Start OR (rtButton.Q AND Step = E_Step.Idel));
+rtStop(CLK := Stop OR (rtButton.Q AND Step = E_Step.MoveMasterToEndOfCam) OR (rtButton.Q AND Step = E_Step.MoveMasterToStartOfCam));
+rtReset(CLK := Reset OR (rtButton.Q AND Step = E_Step.Error));
+
+CASE Step OF
+	E_Step.Idel:
+		StartPremisive  := TRUE;
+		StopPremisive   := FALSE;
+		ResetPremisive  := FALSE;
+		GVL_IO.RedLight := FALSE;
+		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => GVL_IO.GreenLight);
+	E_step.MoveMasterToEndOfCam..E_Step.MoveMasterToStartOfCam:
+		StartPremisive    := FALSE;
+		StopPremisive     := TRUE;
+		ResetPremisive    := FALSE;
+		GVL_IO.GreenLight := TRUE;
+		GVL_IO.RedLight   := FALSE;
+	E_step.Error:
+		GVL_IO.GreenLight := FALSE;
+		ResetPremisive    := TRUE;
+		StopPremisive     := FALSE;
+		StartPremisive    := FALSE;
+		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => GVL_IO.RedLight);
+ELSE
+	GVL_IO.GreenLight := FALSE;
+	GVL_IO.RedLight   := FALSE;
+	StopPremisive     := FALSE;
+	StartPremisive    := FALSE;
+	ResetPremisive    := FALSE;
+END_CASE
+]]></ST>
       </Implementation>
     </Method>
     <LineIds Name="FB_Demo">
       <LineId Id="2298" Count="4" />
-      <LineId Id="2304" Count="213" />
+      <LineId Id="2304" Count="134" />
+      <LineId Id="2614" Count="11" />
+      <LineId Id="2631" Count="4" />
+      <LineId Id="2626" Count="4" />
+      <LineId Id="2461" Count="19" />
+      <LineId Id="2576" Count="2" />
+      <LineId Id="2482" Count="0" />
+      <LineId Id="2485" Count="2" />
+      <LineId Id="2579" Count="1" />
+      <LineId Id="2488" Count="29" />
       <LineId Id="99" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Init">
-      <LineId Id="258" Count="28" />
+      <LineId Id="382" Count="22" />
+      <LineId Id="426" Count="0" />
+      <LineId Id="424" Count="1" />
+      <LineId Id="405" Count="14" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Power">
-      <LineId Id="286" Count="17" />
+      <LineId Id="361" Count="17" />
       <LineId Id="75" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Reset">
-      <LineId Id="113" Count="7" />
+      <LineId Id="146" Count="7" />
       <LineId Id="13" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Status">
-      <LineId Id="103" Count="4" />
+      <LineId Id="127" Count="4" />
       <LineId Id="22" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_UserInput">
-      <LineId Id="78" Count="1" />
-      <LineId Id="7" Count="0" />
+      <LineId Id="191" Count="31" />
+      <LineId Id="97" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>
