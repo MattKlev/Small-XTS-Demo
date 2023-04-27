@@ -2593,23 +2593,6 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.MAIN.Demo.AtLeastOneMoverSelected": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::MAIN::Demo::AtLeastOneMoverSelected",
-            "SCHEMA": {
-                "allOf": [
-                    {
-                        "$ref": "tchmi:general#/definitions/BOOL"
-                    },
-                    {
-                        "propertyOrder": 20
-                    }
-                ]
-            },
-            "USEMAPPING": true
-        },
         "PLC1.MAIN.Demo.Mode": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
@@ -2623,6 +2606,40 @@
                     {
                         "comment": "User input",
                         "propertyOrder": 6
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.MAIN.Demo.MouseXPos": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::MAIN::Demo::MouseXPos",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/LREAL"
+                    },
+                    {
+                        "propertyOrder": 19
+                    }
+                ]
+            },
+            "USEMAPPING": true
+        },
+        "PLC1.MAIN.Demo.NumberOfTouches": {
+            "ACCESS": 3,
+            "DOMAIN": "ADS",
+            "DYNAMIC": true,
+            "MAPPING": "PLC1::MAIN::Demo::NumberOfTouches",
+            "SCHEMA": {
+                "allOf": [
+                    {
+                        "$ref": "tchmi:general#/definitions/UDINT"
+                    },
+                    {
+                        "propertyOrder": 20
                     }
                 ]
             },
@@ -2764,33 +2781,17 @@
             },
             "USEMAPPING": true
         },
-        "PLC1.MAIN.Demo.arSelectedMovers": {
+        "PLC1.MAIN.Demo.__FB_DEMO__M_USERINPUT__SSELECTEDMOVERS": {
             "ACCESS": 3,
             "DOMAIN": "ADS",
             "DYNAMIC": true,
-            "MAPPING": "PLC1::MAIN::Demo::arSelectedMovers",
+            "MAPPING": "PLC1::MAIN::Demo::__FB_DEMO__M_USERINPUT__SSELECTEDMOVERS",
             "SCHEMA": {
                 "allOf": [
                     {
-                        "$ref": "tchmi:server#/definitions/PLC1.tchmi_framework_definitions_XtsMoverList"
-                    },
-                    {
-                        "propertyOrder": 20
-                    }
-                ]
-            },
-            "USEMAPPING": true
-        },
-        "PLC1.MAIN.Demo.sSelectedMovers": {
-            "ACCESS": 3,
-            "DOMAIN": "ADS",
-            "DYNAMIC": true,
-            "MAPPING": "PLC1::MAIN::Demo::sSelectedMovers",
-            "SCHEMA": {
-                "allOf": [
-                    {
+                        "comment": "Bound to by the HMI XtsView control -> Selected mover list",
                         "maxLength": 1000,
-                        "propertyOrder": 22
+                        "propertyOrder": 48
                     },
                     {
                         "$ref": "tchmi:general#/definitions/String"
@@ -8955,6 +8956,8 @@
                 "Logout": 3,
                 "PLC1.MAIN.Demo.AtLeastOneMoverSelected": 3,
                 "PLC1.MAIN.Demo.Mode": 3,
+                "PLC1.MAIN.Demo.MouseXPos": 3,
+                "PLC1.MAIN.Demo.NumberOfTouches": 3,
                 "PLC1.MAIN.Demo.Reset": 3,
                 "PLC1.MAIN.Demo.ResetPremisive": 3,
                 "PLC1.MAIN.Demo.Start": 3,
@@ -8963,6 +8966,7 @@
                 "PLC1.MAIN.Demo.StopPremisive": 3,
                 "PLC1.MAIN.Demo.TouchPoint0XPos": 3,
                 "PLC1.MAIN.Demo.TouchPoint1XPos": 3,
+                "PLC1.MAIN.Demo.__FB_DEMO__M_USERINPUT__SSELECTEDMOVERS": 3,
                 "PLC1.MAIN.Demo.arSelectedMovers": 3,
                 "PLC1.MAIN.Demo.arSelectedMovers.0": 3,
                 "PLC1.MAIN.Demo.arSelectedMovers.1": 3,

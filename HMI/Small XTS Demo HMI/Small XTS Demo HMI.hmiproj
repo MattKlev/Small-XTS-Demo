@@ -141,6 +141,7 @@
     <Folder Include="Imports\Videos" />
     <Folder Include="KeyboardLayouts\" />
     <Folder Include="Localization" />
+    <Folder Include="CSS" />
     <Folder Include="UserControls" />
     <Folder Include="Pages\" />
     <Folder Include="Server\ADS\" />

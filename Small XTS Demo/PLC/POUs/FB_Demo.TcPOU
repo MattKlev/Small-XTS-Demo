@@ -33,8 +33,9 @@ VAR
 	TouchPoint0XPos	:LREAL;
 	TouchPoint1XPos	:LREAL;
 	MouseXPos		:LREAL;
+	NumberOfTouches	:UDINT;
 	
-	AtLeastOneMoverSelected	:BOOL;
+	NumberOfMoversSelected	:UDINT;
 	SelectedMovers			:tchmi_framework_definitions_XtsMoverList;
 
 	
@@ -345,18 +346,6 @@ END_IF
 M_Init := TRUE;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="M_MoverSelection" Id="{f141a41a-ff3c-4ab1-822d-f2562f8d5b92}">
-      <Declaration><![CDATA[METHOD M_MoverSelection
-VAR_INPUT
-END_VAR
-VAR_INST
-
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="M_Power" Id="{a91e7a0f-58b4-492c-be4e-09cdeda747a4}">
       <Declaration><![CDATA[METHOD M_Power
 VAR_INPUT
@@ -427,58 +416,66 @@ VAR_INST
 	tonButtonDebounce : TON;
 	rtButton          : R_TRIG;
 	Blink             : BLINK;
-	
-	
+
 	//Converts the XTS viewer mover selection into a PLC array.
 	//HMI sends a varrying array size of "tchmi_framework_definitions_XtsMoverListItem"
-	fbJsonDataType	:FB_JsonReadWriteDatatype;
-	sSelectedMovers			:STRING(1000);//Bound to by the HMI XtsView control -> Selected mover list
-	sSelectedMoversOld		:STRING(1000);
+	fbJson             : FB_JsonDomParser;
+	jsonDoc            : SJsonValue;
+	fbJsonDataType     : FB_JsonReadWriteDatatype;
+	sSelectedMovers    : STRING(1000); //Bound to by the HMI XtsView control -> Selected mover list
+	sSelectedMoversOld : STRING(1000);
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[tonButtonDebounce(IN := Button, PT := T#100MS);
 rtButton(CLK := tonButtonDebounce.Q);
+
 //Set back to auto mode, if using the physical button
 IF rtButton.Q THEN
 	Mode := E_Mode.Auto;
 END_IF
+
 rtStart(CLK := Start OR (rtButton.Q AND Step = E_Step.Idel));
 rtStop(CLK := Stop OR (rtButton.Q AND Step = E_Step.MoveMasterToEndOfCam) OR (rtButton.Q AND Step = E_Step.MoveMasterToStartOfCam));
 rtReset(CLK := Reset OR (rtButton.Q AND Step = E_Step.Error));
 
 CASE Step OF
 	E_Step.Idel:
-		StartPremisive  := TRUE;
-		StopPremisive   := FALSE;
-		ResetPremisive  := FALSE;
-		RedLight := FALSE;
+		StartPremisive := TRUE;
+		StopPremisive  := FALSE;
+		ResetPremisive := FALSE;
+		RedLight       := FALSE;
 		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => GreenLight);
 	E_step.MoveMasterToEndOfCam..E_Step.MoveMasterToStartOfCam:
-		StartPremisive    := FALSE;
-		StopPremisive     := TRUE;
-		ResetPremisive    := FALSE;
-		GreenLight := TRUE;
-		RedLight   := FALSE;
+		StartPremisive := FALSE;
+		StopPremisive  := TRUE;
+		ResetPremisive := FALSE;
+		GreenLight     := TRUE;
+		RedLight       := FALSE;
 	E_step.Error:
-		GreenLight := FALSE;
-		ResetPremisive    := TRUE;
-		StopPremisive     := FALSE;
-		StartPremisive    := FALSE;
+		GreenLight     := FALSE;
+		ResetPremisive := TRUE;
+		StopPremisive  := FALSE;
+		StartPremisive := FALSE;
 		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => RedLight);
 ELSE
-	GreenLight := FALSE;
-	RedLight   := FALSE;
-	StopPremisive     := FALSE;
-	StartPremisive    := FALSE;
-	ResetPremisive    := FALSE;
+	GreenLight     := FALSE;
+	RedLight       := FALSE;
+	StopPremisive  := FALSE;
+	StartPremisive := FALSE;
+	ResetPremisive := FALSE;
 END_CASE
 
-
 //Mover selection
-IF sSelectedMoversOld<> sSelectedMovers THEN
-	MEMSET(destAddr:=ADR(SelectedMovers),fillByte:=0,n:=SIZEOF(SelectedMovers));
-	fbJsonDataType.SetSymbolFromJson(sSelectedMovers,'tchmi_framework_definitions_XtsMoverList',SIZEOF(SelectedMovers), ADR(SelectedMovers));
-	sSelectedMoversOld:=sSelectedMovers;
+IF sSelectedMoversOld <> sSelectedMovers THEN
+
+	//Get Number of selected movers
+	jsonDoc                := fbJson.ParseDocument(sSelectedMovers);
+	NumberOfMoversSelected := fbJson.GetArraySize(jsonDoc);
+
+	//Update the array of selected movers
+	MEMSET(destAddr := ADR(SelectedMovers), fillByte := 0, n := SIZEOF(SelectedMovers));
+	fbJsonDataType.SetSymbolFromJson(sSelectedMovers, 'tchmi_framework_definitions_XtsMoverList', SIZEOF(SelectedMovers), ADR(SelectedMovers));
+	sSelectedMoversOld := sSelectedMovers;
 END_IF
 ]]></ST>
       </Implementation>
@@ -498,34 +495,25 @@ END_IF
       <LineId Id="99" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Init">
-      <LineId Id="382" Count="5" />
-      <LineId Id="390" Count="14" />
-      <LineId Id="426" Count="0" />
-      <LineId Id="424" Count="1" />
-      <LineId Id="405" Count="14" />
-      <LineId Id="5" Count="0" />
-    </LineIds>
-    <LineIds Name="FB_Demo.M_MoverSelection">
+      <LineId Id="431" Count="38" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Power">
-      <LineId Id="361" Count="17" />
+      <LineId Id="386" Count="17" />
       <LineId Id="75" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Reset">
-      <LineId Id="146" Count="7" />
+      <LineId Id="157" Count="7" />
       <LineId Id="13" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Status">
-      <LineId Id="127" Count="4" />
+      <LineId Id="135" Count="4" />
       <LineId Id="22" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_UserInput">
-      <LineId Id="191" Count="1" />
-      <LineId Id="233" Count="0" />
-      <LineId Id="230" Count="2" />
-      <LineId Id="193" Count="29" />
-      <LineId Id="248" Count="7" />
+      <LineId Id="283" Count="44" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="328" Count="4" />
       <LineId Id="97" Count="0" />
     </LineIds>
   </POU>
