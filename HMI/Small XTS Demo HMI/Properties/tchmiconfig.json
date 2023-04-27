@@ -75,21 +75,21 @@
     {
       "url": "Pages/Scope.content",
       "preload": false,
-      "keepAlive": false,
+      "keepAlive": true,
       "loadSync": false,
       "preloadBindings": false
     },
     {
       "url": "Pages/Settings.content",
       "preload": false,
-      "keepAlive": false,
+      "keepAlive": true,
       "loadSync": false,
       "preloadBindings": false
     },
     {
       "url": "Pages/XTS.content",
       "preload": false,
-      "keepAlive": false,
+      "keepAlive": true,
       "loadSync": false,
       "preloadBindings": false
     }
@@ -161,120 +161,120 @@
         "type": "tchmi:framework#/definitions/Path",
         "description": "Normal Icon of page: XTS",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_normal.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_normal.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_XTS_pressed": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Pressed Icon of page: XTS",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_pressed.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_pressed.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_XTS_active": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Active Icon of page: XTS",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_active.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_active.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Scope_normal": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Normal Icon of page: Scope",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_normal.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_normal.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Scope_pressed": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Pressed Icon of page: Scope",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_pressed.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_pressed.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Scope_active": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Active Icon of page: Scope",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_active.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_active.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Events_normal": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Normal Icon of page: Events",
         "values": {
-          "Base": "Themes/Base/Images/Events/message_normal.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Events/message_normal.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Events_pressed": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Pressed Icon of page: Events",
         "values": {
-          "Base": "Themes/Base/Images/Events/message_pressed.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Events/message_pressed.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Events_active": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Active Icon of page: Events",
         "values": {
-          "Base": "Themes/Base/Images/Events/message_active.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Events/message_active.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Settings_normal": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Normal Icon of page: Settings",
         "values": {
-          "Base": "Themes/Base/Images/Settings/settings_normal.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Settings/settings_normal.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Settings_pressed": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Pressed Icon of page: Settings",
         "values": {
-          "Base": "Themes/Base/Images/Settings/settings_pressed.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Settings/settings_pressed.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_Settings_active": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Active Icon of page: Settings",
         "values": {
-          "Base": "Themes/Base/Images/Settings/settings_active.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Settings/settings_active.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_EtherCATDiagnostics_normal": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Normal Icon of page: EtherCAT Diagnostics",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_normal.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_normal.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_EtherCATDiagnostics_pressed": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Pressed Icon of page: EtherCAT Diagnostics",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_pressed.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_pressed.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       },
       "TR_Icon_EtherCATDiagnostics_active": {
         "type": "tchmi:framework#/definitions/Path",
         "description": "Active Icon of page: EtherCAT Diagnostics",
         "values": {
-          "Base": "Themes/Base/Images/Placeholder/placeholder_active.svg",
-          "Base-Dark": "Themes/Base-Dark/Images/Placeholder/placeholder_active.svg"
+          "Base": null,
+          "Base-Dark": null
         }
       }
     }

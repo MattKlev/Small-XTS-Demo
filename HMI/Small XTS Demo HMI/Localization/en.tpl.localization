@@ -9,6 +9,7 @@
     "L_Theme": "Theme",
     "L_Settings": "Settings",
     "L_EtherCATDiagnostics": "EtherCAT Diagnostics",
-    "L_Mode": "Mode"
+    "L_Mode": "Mode",
+    "L_XtsLayOut": "XTS Layout"
   }
 }
