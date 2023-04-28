@@ -21,7 +21,7 @@ VAR
 	Cycle : UINT;
 
 	//User input
-	Mode                  : E_Mode;
+	Mode                  : E_Mode:=E_Mode.ExternalSetPoint;
 	Start                 : BOOL;
 	StartPremisive AT %Q* : BOOL;
 	Stop                  : BOOL;
@@ -75,10 +75,16 @@ VAR
 	CamOutM2 : MC_CamOut;
 	
 	//Collision Avoidnace
+	GroupState		:MC_GroupReadStatus;
 	AddM1ToCAGroup	:MC_AddAxisToGroup;
 	AddM2ToCAGroup	:MC_AddAxisToGroup;
 	
 	GroupEnable		:MC_GroupEnable;
+	GroupReset		:MC_GroupReset;
+	GroupDisable	:MC_GroupDisable;
+	GroupHalt		:MC_GroupHalt;
+	RemoveM1FromGroup	:MC_RemoveAxisFromGroup;
+	RemoveM2FromGroup	:MC_RemoveAxisFromGroup;
 	
 	SelecteMoverCAMove	:MC_MoveAbsoluteCA;
 	
@@ -107,6 +113,10 @@ CASE Step OF
 			M2Power.Enable     := TRUE;
 			Step               := E_Step.Enable;
 		END_IF
+		
+		IF GroupState.GroupErrorStop OR OneOrMoreAxisInError THEN
+			LogStepAndGoToErrorState(Step);
+		END_IF
 
 	E_Step.Enable:
 		IF NOT OneOrMoreAxisInError THEN
@@ -119,7 +129,7 @@ CASE Step OF
 				END_CASE
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.MoveMoverstoSafePos:
@@ -140,7 +150,7 @@ CASE Step OF
 				Step := E_Step.MoveMoversToStartPos;
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.MoveMoversToStartPos:
@@ -161,7 +171,7 @@ CASE Step OF
 				Step := E_Step.SetMasterPos;
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.SetMasterPos:
@@ -176,7 +186,7 @@ CASE Step OF
 				Step := E_Step.CamIn;
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.CamIn:
@@ -207,7 +217,7 @@ CASE Step OF
 				Step := E_Step.MoveMasterToEndOfCam;
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.MoveMasterToEndOfCam:
@@ -226,7 +236,7 @@ CASE Step OF
 				Step := E_Step.MoveMasterToStartOfCam;
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.MoveMasterToStartOfCam:
@@ -251,7 +261,7 @@ CASE Step OF
 				END_IF
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.StoppingMaster:
@@ -265,7 +275,7 @@ CASE Step OF
 				Step := E_Step.CamOut;
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.CamOut:
@@ -281,7 +291,7 @@ CASE Step OF
 		ELSE
 			CamOutM1(Slave := Mover1, Execute := FALSE);
 			CamOutM2(Slave := Mover2, Execute := FALSE);
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 		
 	E_Step.AddAxisToCA:
@@ -321,8 +331,7 @@ CASE Step OF
 			Step:=E_Step.Error;
 		END_IF
 		
-	E_Step.MoveSelectedMover:
-	
+	E_Step.MoveSelectedMover:	
 		IF NumberOfMoversSelected >0 THEN
 			IF SelectedMovers[0].MoverIndex=0 THEN
 				SelectedAxis REF=Mover1;
@@ -338,28 +347,92 @@ CASE Step OF
 		//Does not respect soft limits.
 		//Need to Min/Max the input
 		
-		DebounceTouch(IN:=NumTouches>0 );
+		DebounceTouch(IN:=NumTouches>0 AND (SelecteMoverCAMove.Position<>SingleFingerXPos));
+		IF DebounceTouch.Q THEN
+			IF SingleFingerXPos<42.0 THEN
+				SelecteMoverCAMove.Position:=42.0;
+			ELSIF SingleFingerXPos>460.0 THEN
+				SelecteMoverCAMove.Position:=460.0;
+			ELSE
+				SelecteMoverCAMove.Position:=SingleFingerXPos;
+			END_IF
+		END_IF
+
 		SelecteMoverCAMove(
 			Axis:=SelectedAxis , 
 			Execute:=DebounceTouch.Q , 
 			ContinuousUpdate:=FALSE , 
-			Position:=SingleFingerXPos , 
 			Velocity:=500.0 , 
 			BufferMode:=MC_BUFFER_MODE.mcAborting, 
 			Direction:=Tc3_Mc3Definitions.MC_DIRECTION.mcDirectionNonModulo );	
 		
-	
-	E_Step.Disable:
-		MasterPower.Enable := FALSE;
-		M1Power.Enable     := FALSE;
-		M2Power.Enable     := FALSE;
+		IF rtStop.Q THEN
+			Step := E_Step.HaltMovers;
+		END_IF
+		
+		IF GroupState.GroupErrorStop THEN
+			LogStepAndGoToErrorState(Step);
+		END_IF
+		
+	E_Step.HaltMovers:
+		GroupHalt(AxesGroup:=CAGroup , Execute:=TRUE);
+		
+		IF NOT GroupHalt.Error THEN
+			IF GroupHalt.Done THEN
+				GroupHalt(AxesGroup:=CAGroup,Execute:=FALSE);
+				Step := E_Step.DisableCA;
+			END_IF
+		ELSE
+			LogStepAndGoToErrorState(Step);
+		END_IF	
+		
+		
+	E_Step.DisableCA:
+		GroupDisable(AxesGroup:=CAGroup , Execute:=TRUE);
+			
+		IF NOT GroupDisable.Error THEN
+			IF GroupDisable.Done THEN
+				GroupDisable(AxesGroup:=CAGroup,Execute:=FALSE);
+				Step := E_Step.RemoveAxisFromCA;
+			END_IF
+		ELSE
+			LogStepAndGoToErrorState(Step);
+		END_IF
+		
+	E_Step.RemoveAxisFromCA:		
+		RemoveM1FromGroup(
+			AxesGroup:= CAGroup, 
+			Execute:=TRUE , 
+			IdentInGroup:=UDINT_TO_IDENTINGROUP(Mover1.NcToPlc.AxisId));
 
+		RemoveM2FromGroup(
+			AxesGroup:= CAGroup, 
+			Execute:=TRUE , 
+			IdentInGroup:=UDINT_TO_IDENTINGROUP(Mover2.NcToPlc.AxisId));			
+			
+			IF NOT RemoveM1FromGroup.Error AND NOT RemoveM2FromGroup.Error THEN
+				IF RemoveM1FromGroup.Done AND RemoveM2FromGroup.Done THEN
+					RemoveM1FromGroup(AxesGroup:= CAGroup, Execute:=FALSE );
+					RemoveM2FromGroup(AxesGroup:= CAGroup, Execute:=FALSE );
+					Step := E_Step.Disable;
+				END_IF
+			ELSE
+				LogStepAndGoToErrorState(Step);
+			END_IF
+		
+	E_Step.Disable:
+		MasterPower(Axis    := Master,Enable:=FALSE);
+		M1Power(Axis        := Mover1,Enable:=FALSE);
+		M2Power(Axis        := Mover2,Enable:=FALSE);
+		
+		M_Status();
+		//Needs work this will not go into error state directly if power is removed and the axis is busy for some reason.
 		IF NOT OneOrMoreAxisInError THEN
 			IF AllAxisDisabled THEN
 				Step := E_Step.Idel;
 			END_IF
 		ELSE
-			Step := E_Step.Error;
+			LogStepAndGoToErrorState(Step);
 		END_IF
 
 	E_Step.Error:
@@ -370,7 +443,7 @@ CASE Step OF
 	E_Step.Reset:
 		M_Reset();
 
-		IF NOT OneOrMoreAxisInError THEN
+		IF NOT OneOrMoreAxisInError AND NOT GroupState.GroupErrorStop  THEN
 			Step := E_Step.Init;
 		END_IF
 END_CASE
@@ -391,6 +464,19 @@ Stop           := FALSE;
 StopPremisive  := FALSE;
 Reset          := FALSE;
 ResetPremisive := FALSE;
+
+AddM1ToCAGroup(AxesGroup := CAGroup, Axis := Mover1, Execute := FALSE);
+AddM2ToCAGroup(AxesGroup := CAGroup, Axis := Mover2, Execute := FALSE);
+
+GroupEnable(AxesGroup := CAGroup, Execute := FALSE);
+GroupReset(AxesGroup := CAGroup, Execute := FALSE);
+GroupDisable(AxesGroup := CAGroup, Execute := FALSE);
+GroupHalt(AxesGroup := CAGroup, Execute := FALSE);
+
+RemoveM1FromGroup(AxesGroup:= CAGroup, Execute:=FALSE); 
+RemoveM2FromGroup(AxesGroup:= CAGroup, Execute:=FALSE); 
+
+SelecteMoverCAMove(Axis := SelectedAxis, Execute := FALSE);
 
 MasterMoveAbs(Axis := Master, Execute := FALSE);
 M1MoveAbs(Axis := Mover1, Execute := FALSE);
@@ -464,15 +550,29 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[MasterReset(Axis := Master,
-	Execute      := Master.Status.Error);
+        <ST><![CDATA[MasterReset(Axis := Master, Execute := Master.Status.Error);
 
-M1Reset(Axis := Mover1,
-	Execute  := Mover1.Status.Error);
+IF NOT MasterReset.Busy THEN
+	MasterReset(Axis := Master, Execute := FALSE);
+END_IF
 
-M2Reset(Axis := Mover2,
-	Execute  := Mover2.Status.Error);
-]]></ST>
+M1Reset(Axis := Mover1, Execute := Mover1.Status.Error);
+
+IF NOT M1Reset.Busy THEN
+	M1Reset(Axis := Mover1, Execute := FALSE);
+END_IF
+
+M2Reset(Axis := Mover2, Execute := Mover2.Status.Error);
+
+IF NOT M2Reset.Busy THEN
+	M2Reset(Axis := Mover2, Execute := FALSE);
+END_IF
+
+GroupReset(AxesGroup := CAGroup, Execute := GroupState.GroupErrorStop);
+
+IF NOT GroupReset.Busy THEN
+	GroupReset(AxesGroup := CAGroup, Execute := FALSE);
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="M_Status" Id="{6d5d68e8-78bd-4242-bd9d-cb4c5e329f39}">
@@ -486,7 +586,24 @@ Mover1.ReadStatus();
 Mover2.ReadStatus();
 
 OneOrMoreAxisInError := Master.Status.Error OR Mover1.Status.Error OR Mover2.Status.Error;
-]]></ST>
+
+GroupState(
+	AxesGroup:=CAGroup , 
+	Enable:=TRUE , 
+	Valid=> , 
+	Busy=> , 
+	GroupMoving=> , 
+	GroupHoming=> , 
+	GroupErrorStop=> , 
+	GroupNotReady=> , 
+	GroupStandby=> , 
+	GroupStopping=> , 
+	GroupDisabled=> , 
+	AllAxesStanding=> , 
+	ConstantVelocity=> , 
+	Accelerating=> , 
+	Decelerating=> , 
+	InPosition=>  );]]></ST>
       </Implementation>
     </Method>
     <Method Name="M_UserInput" Id="{c3087039-f600-4463-a24a-4a070ff6bad0}">
@@ -526,7 +643,7 @@ CASE Step OF
 		ResetPremisive := FALSE;
 		RedLight       := FALSE;
 		Blink(ENABLE := TRUE, TIMELOW := T#0.5S, TIMEHIGH := T#0.5S, OUT => GreenLight);
-	E_step.MoveMasterToEndOfCam..E_Step.MoveMasterToStartOfCam:
+	E_step.MoveMasterToEndOfCam, E_Step.MoveMasterToStartOfCam, E_Step.MoveSelectedMover:
 		StartPremisive := FALSE;
 		StopPremisive  := TRUE;
 		ResetPremisive := FALSE;
@@ -562,7 +679,13 @@ END_IF
       </Implementation>
     </Method>
     <LineIds Name="FB_Demo">
-      <LineId Id="2714" Count="192" />
+      <LineId Id="2714" Count="16" />
+      <LineId Id="3351" Count="0" />
+      <LineId Id="3353" Count="1" />
+      <LineId Id="3352" Count="0" />
+      <LineId Id="2731" Count="32" />
+      <LineId Id="3295" Count="0" />
+      <LineId Id="2765" Count="141" />
       <LineId Id="3013" Count="1" />
       <LineId Id="3019" Count="4" />
       <LineId Id="3038" Count="0" />
@@ -583,7 +706,7 @@ END_IF
       <LineId Id="3067" Count="0" />
       <LineId Id="3077" Count="0" />
       <LineId Id="3042" Count="0" />
-      <LineId Id="3100" Count="2" />
+      <LineId Id="3101" Count="1" />
       <LineId Id="3104" Count="0" />
       <LineId Id="3106" Count="1" />
       <LineId Id="3109" Count="1" />
@@ -594,32 +717,76 @@ END_IF
       <LineId Id="3119" Count="2" />
       <LineId Id="3118" Count="0" />
       <LineId Id="3099" Count="0" />
-      <LineId Id="3081" Count="5" />
+      <LineId Id="3362" Count="0" />
+      <LineId Id="3369" Count="2" />
+      <LineId Id="3374" Count="0" />
+      <LineId Id="3377" Count="1" />
+      <LineId Id="3375" Count="0" />
+      <LineId Id="3364" Count="1" />
+      <LineId Id="3081" Count="3" />
+      <LineId Id="3086" Count="0" />
       <LineId Id="3091" Count="1" />
       <LineId Id="3080" Count="0" />
+      <LineId Id="3210" Count="1" />
+      <LineId Id="3209" Count="0" />
+      <LineId Id="3278" Count="3" />
+      <LineId Id="3232" Count="1" />
+      <LineId Id="3236" Count="0" />
+      <LineId Id="3256" Count="0" />
+      <LineId Id="3246" Count="0" />
+      <LineId Id="3248" Count="0" />
+      <LineId Id="3254" Count="0" />
+      <LineId Id="3249" Count="3" />
+      <LineId Id="3247" Count="0" />
+      <LineId Id="3294" Count="0" />
+      <LineId Id="3293" Count="0" />
       <LineId Id="3075" Count="0" />
-      <LineId Id="2908" Count="26" />
+      <LineId Id="3216" Count="0" />
+      <LineId Id="3222" Count="2" />
+      <LineId Id="3228" Count="0" />
+      <LineId Id="3257" Count="0" />
+      <LineId Id="3227" Count="0" />
+      <LineId Id="3230" Count="1" />
+      <LineId Id="3225" Count="0" />
+      <LineId Id="3317" Count="0" />
+      <LineId Id="3306" Count="0" />
+      <LineId Id="3322" Count="3" />
+      <LineId Id="3338" Count="3" />
+      <LineId Id="3337" Count="0" />
+      <LineId Id="3329" Count="2" />
+      <LineId Id="3357" Count="0" />
+      <LineId Id="3355" Count="0" />
+      <LineId Id="3333" Count="3" />
+      <LineId Id="3332" Count="0" />
+      <LineId Id="3260" Count="0" />
+      <LineId Id="2908" Count="1" />
+      <LineId Id="3302" Count="3" />
+      <LineId Id="2912" Count="22" />
       <LineId Id="99" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Init">
-      <LineId Id="474" Count="38" />
+      <LineId Id="542" Count="13" />
+      <LineId Id="559" Count="0" />
+      <LineId Id="600" Count="0" />
+      <LineId Id="560" Count="0" />
+      <LineId Id="601" Count="0" />
+      <LineId Id="561" Count="33" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Power">
-      <LineId Id="411" Count="17" />
+      <LineId Id="436" Count="17" />
       <LineId Id="75" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Reset">
-      <LineId Id="168" Count="7" />
-      <LineId Id="13" Count="0" />
+      <LineId Id="202" Count="21" />
+      <LineId Id="188" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Status">
       <LineId Id="143" Count="4" />
-      <LineId Id="22" Count="0" />
+      <LineId Id="151" Count="17" />
     </LineIds>
     <LineIds Name="FB_Demo.M_UserInput">
-      <LineId Id="373" Count="1" />
-      <LineId Id="379" Count="48" />
+      <LineId Id="509" Count="50" />
       <LineId Id="97" Count="0" />
     </LineIds>
   </POU>

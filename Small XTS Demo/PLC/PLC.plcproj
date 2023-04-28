@@ -35,6 +35,9 @@
     <Compile Include="POUs\FB_Demo.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\LogStepAndGoToErrorState.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\MAIN.TcPOU">
       <SubType>Code</SubType>
     </Compile>

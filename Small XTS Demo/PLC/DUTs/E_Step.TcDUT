@@ -3,6 +3,7 @@
   <DUT Name="E_Step" Id="{9d1a9ace-f243-4597-824c-40153318b4c3}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 {attribute 'strict'}
+{attribute 'to_string'}
 TYPE
 	E_Step :
 	(
@@ -20,6 +21,9 @@ TYPE
 		MoveSelectedMover,
 		StoppingMaster,
 		CamOut,
+		HaltMovers,
+		DisableCA,
+		RemoveAxisFromCA,
 		Disable,
 		Error,
 		Reset
