@@ -21,7 +21,7 @@ VAR
 	Cycle : UINT;
 
 	//User input
-	Mode                  : E_Mode:=E_Mode.ExternalSetPoint;
+	Mode                  : E_Mode:=E_Mode.Auto;
 	Start                 : BOOL;
 	StartPremisive AT %Q* : BOOL;
 	Stop                  : BOOL;

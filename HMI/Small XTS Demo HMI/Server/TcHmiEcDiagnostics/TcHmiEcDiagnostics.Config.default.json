@@ -2,8 +2,8 @@
     "devices": {
         "Device1": {
             "enabled": true,
-            "masterNetId": "5.40.72.178.2.1",
-            "targetNetId": "5.40.72.178.1.1"
+            "masterNetId": "5.85.200.62.2.1",
+            "targetNetId": "5.85.200.62.1.1"
         }
     },
     "updateIntervals": {

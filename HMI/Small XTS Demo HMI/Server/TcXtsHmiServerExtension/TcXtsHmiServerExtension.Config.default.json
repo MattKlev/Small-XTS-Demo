@@ -2,7 +2,7 @@
     "TARGET_SYSTEMS": {
         "Local": {
             "EXPECTED_XPU_COUNT": 1,
-            "NETID": "5.40.72.178.1.1",
+            "NETID": "5.85.200.62.1.1",
             "UPDATE_RATE": 8,
             "UPDATE_RATE_DIAG": 100
         }

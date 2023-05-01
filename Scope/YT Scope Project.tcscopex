@@ -56,7 +56,7 @@
       <SortPriority>0</SortPriority>
       <SubMember>
         <AdsAcquisition AssemblyName="TwinCAT.Measurement.Scope.API.Model">
-          <AmsNetId>5.40.72.178.1.1</AmsNetId>
+          <AmsNetId>5.85.200.62.1.1</AmsNetId>
           <Area>Local</Area>
           <ArrayLength>0</ArrayLength>
           <BaseSampleTime>20000</BaseSampleTime>
@@ -138,7 +138,7 @@
           <VariableSize>8</VariableSize>
         </AdsAcquisition>
         <AdsAcquisition AssemblyName="TwinCAT.Measurement.Scope.API.Model">
-          <AmsNetId>5.40.72.178.1.1</AmsNetId>
+          <AmsNetId>5.85.200.62.1.1</AmsNetId>
           <Area>Local</Area>
           <ArrayLength>0</ArrayLength>
           <BaseSampleTime>20000</BaseSampleTime>
@@ -557,7 +557,7 @@
           <ForeColor>-14803426</ForeColor>
           <Guid>3eaf8bb1-f7d5-4e98-aee9-f1b798efe505</Guid>
           <Name>Overview Chart</Name>
-          <OverviewVisible>true</OverviewVisible>
+          <OverviewVisible>false</OverviewVisible>
           <SortPriority>100</SortPriority>
           <Title>OverviewChart_157</Title>
         </OverviewChart>
