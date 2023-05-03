@@ -3,10 +3,10 @@
   <DUT Name="tchmi_framework_definitions_XtsMoverListItem" Id="{a0b8e178-c6ab-4614-8df4-efe9468eeb61}">
     <Declaration><![CDATA[TYPE
 	tchmi_framework_definitions_XtsMoverListItem :
-STRUCT
-	MoverIndex: UINT (* minimum value: 0 maximum value: 65535 *);
-	ProcessingUnitIndex: UINT (* minimum value: 0 maximum value: 65535 *);
-END_STRUCT
+	STRUCT
+		MoverIndex          : UINT (* minimum value: 0 maximum value: 65535 *) ;
+		ProcessingUnitIndex : UINT (* minimum value: 0 maximum value: 65535 *) ;
+	END_STRUCT
 END_TYPE]]></Declaration>
   </DUT>
 </TcPlcObject>

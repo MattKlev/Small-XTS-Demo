@@ -10,6 +10,7 @@
     "L_Settings": "Settings",
     "L_EtherCATDiagnostics": "EtherCAT Diagnostics",
     "L_Mode": "Mode",
-    "L_XtsLayOut": "XTS Layout"
+    "L_XtsLayOut": "XTS Layout",
+    "L_IoT": "IoT"
   }
 }

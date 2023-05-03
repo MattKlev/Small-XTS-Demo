@@ -9,7 +9,7 @@
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">15.0</VisualStudioVersion>
     <AvailablePlatforms>TwinCAT HMI</AvailablePlatforms>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-    <HmiTitle>Please enter your Title...</HmiTitle>
+    <HmiTitle>Small XTS Demo</HmiTitle>
     <HmiVerboseLevel>2</HmiVerboseLevel>
     <HmiVersion>1.0.0.0</HmiVersion>
     <HmiCommunicationServerPort>3002</HmiCommunicationServerPort>
@@ -123,6 +123,18 @@
     <Content Include="Images\Buttons\stop_pressed.svg">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Images\QRCodes\qrcode1.svg">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Images\QRCodes\qrcode2.svg">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Images\XTS_Logo.ico">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Pages\IoT.content">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="UserControls\UCToggleButton.usercontrol">
       <SubType>Content</SubType>
     </Content>
@@ -134,6 +146,7 @@
     <Folder Include="Images" />
     <Folder Include="Images\Manifest" />
     <Folder Include="Images\Buttons" />
+    <Folder Include="Images\QRCodes" />
     <Folder Include="Images\PLC\" />
     <Folder Include="Images\TwinCAT\" />
     <Folder Include="Imports" />
@@ -453,10 +466,6 @@
       <Visible>true</Visible>
     </Content>
     <Content Include="KeyboardLayouts\Numpad (plusminus).keyboard.json">
-      <SubType>Content</SubType>
-      <Visible>true</Visible>
-    </Content>
-    <Content Include="Images\Favicon.ico">
       <SubType>Content</SubType>
       <Visible>true</Visible>
     </Content>

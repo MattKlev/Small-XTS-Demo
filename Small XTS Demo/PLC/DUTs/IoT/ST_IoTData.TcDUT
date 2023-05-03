@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_IoTData" Id="{90a67276-18bc-4e18-bb2d-f45060aa1052}">
+    <Declaration><![CDATA[TYPE ST_IoTData :
+STRUCT
+    {attribute 'iot.DisplayName' := 'Start Button'}
+    StartButton : BOOL;
+
+
+    {attribute 'iot.DisplayName' := 'Mover 1 Position'}
+    {attribute 'iot.ReadOnly' := 'true'}
+    {attribute 'iot.Unit' := 'mm'}
+	{attribute 'iot.DecimalPrecision' := '3'}
+    Mover1ActPos  : REAL;
+
+    {attribute 'iot.DisplayName' := 'Mover 2 Position'}
+    {attribute 'iot.ReadOnly' := 'true'}
+    {attribute 'iot.Unit' := 'mm'}
+	{attribute 'iot.DecimalPrecision' := '3'}
+    Mover2ActPos  : REAL;
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

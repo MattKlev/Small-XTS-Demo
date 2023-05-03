@@ -55,7 +55,7 @@
   <meta name="google" content="notranslate">
   <meta name="viewport" content="{{METAVIEWPORT}}">
   <link rel="manifest" crossorigin="use-credentials" href="Properties/tchmimanifest.json">
-  <link rel="icon" href="Images/Favicon.ico">
+  <link rel="icon" href="Images/XTS_Logo.ico">
   {{GLOBAL_JS_INCLUDES}}
   <script>
 	 window.onload = function load() {

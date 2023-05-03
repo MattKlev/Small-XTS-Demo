@@ -7,21 +7,21 @@ END_VAR
 VAR_OUTPUT
 END_VAR
 VAR
- 	CAGroup             : AXES_GROUP_REF;	
-	Master : AXIS_REF;
-	Mover1 : AXIS_REF;
-	Mover2 : AXIS_REF;
-	{attribute 'hide'} 
-	SelectedAxis	: REFERENCE TO AXIS_REF;
-	{attribute 'hide'} 
-	NullAxis		:AXIS_REF;
-	
+	CAGroup : AXES_GROUP_REF;
+	Master  : AXIS_REF;
+	Mover1  : AXIS_REF;
+	Mover2  : AXIS_REF;
+	{attribute 'hide'}
+	SelectedAxis : REFERENCE TO AXIS_REF;
+	{attribute 'hide'}
+	NullAxis : AXIS_REF;
+
 	//Logic vars
 	Step  : E_Step;
 	Cycle : UINT;
 
 	//User input
-	Mode                  : E_Mode:=E_Mode.Auto;
+	Mode                  : E_Mode := E_Mode.Auto;
 	Start                 : BOOL;
 	StartPremisive AT %Q* : BOOL;
 	Stop                  : BOOL;
@@ -39,10 +39,9 @@ VAR
 
 	VelocityCycle : ARRAY[0..3] OF LREAL := [1250.0, 1000.0, 750.0, 500.0];
 
-	NumTouches			:UDINT;
-	DebounceTouch		:TON:=(PT:=T#100MS);
-	SingleFingerXPos	:LREAL;
-	
+	NumTouches       : UDINT;
+	DebounceTouch    : TON := (PT := T#100MS);
+	SingleFingerXPos : LREAL;
 
 	NumberOfMoversSelected : UDINT;
 	SelectedMovers         : tchmi_framework_definitions_XtsMoverList;
@@ -73,26 +72,28 @@ VAR
 
 	CamInM2  : MC_CamIn;
 	CamOutM2 : MC_CamOut;
-	
+
 	//Collision Avoidnace
-	GroupState		:MC_GroupReadStatus;
-	AddM1ToCAGroup	:MC_AddAxisToGroup;
-	AddM2ToCAGroup	:MC_AddAxisToGroup;
-	
-	GroupEnable		:MC_GroupEnable;
-	GroupReset		:MC_GroupReset;
-	GroupDisable	:MC_GroupDisable;
-	GroupHalt		:MC_GroupHalt;
-	RemoveM1FromGroup	:MC_RemoveAxisFromGroup;
-	RemoveM2FromGroup	:MC_RemoveAxisFromGroup;
-	
-	SelecteMoverCAMove	:MC_MoveAbsoluteCA;
-	
-	
+	GroupState     : MC_GroupReadStatus;
+	AddM1ToCAGroup : MC_AddAxisToGroup;
+	AddM2ToCAGroup : MC_AddAxisToGroup;
+
+	GroupEnable       : MC_GroupEnable;
+	GroupReset        : MC_GroupReset;
+	GroupDisable      : MC_GroupDisable;
+	GroupHalt         : MC_GroupHalt;
+	RemoveM1FromGroup : MC_RemoveAxisFromGroup;
+	RemoveM2FromGroup : MC_RemoveAxisFromGroup;
+
+	SelecteMoverCAMove : MC_MoveAbsoluteCA;
+
 	//IO
 	Button     AT %I* : BOOL;
 	GreenLight AT %Q* : BOOL;
 	RedLight   AT %Q* : BOOL;
+	
+	//Iot
+	IotStartButton		:BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -113,7 +114,7 @@ CASE Step OF
 			M2Power.Enable     := TRUE;
 			Step               := E_Step.Enable;
 		END_IF
-		
+
 		IF GroupState.GroupErrorStop OR OneOrMoreAxisInError THEN
 			LogStepAndGoToErrorState(Step);
 		END_IF
@@ -293,139 +294,134 @@ CASE Step OF
 			CamOutM2(Slave := Mover2, Execute := FALSE);
 			LogStepAndGoToErrorState(Step);
 		END_IF
-		
+
 	E_Step.AddAxisToCA:
-		AddM1ToCAGroup(
-			AxesGroup:=CAGroup , 
-			Axis:=Mover1 , 
-			Execute:=TRUE , 
-			IdentInGroup:=UDINT_TO_IDENTINGROUP(id:=Mover1.NcToPlc.AxisId ) );	
-			
-		AddM2ToCAGroup(
-			AxesGroup:=CAGroup , 
-			Axis:=Mover2 , 
-			Execute:=TRUE , 
-			IdentInGroup:=UDINT_TO_IDENTINGROUP(id:=Mover2.NcToPlc.AxisId ));
-			
+		AddM1ToCAGroup(AxesGroup := CAGroup,
+			Axis                 := Mover1,
+			Execute              := TRUE,
+			IdentInGroup         := UDINT_TO_IDENTINGROUP(id := Mover1.NcToPlc.AxisId));
+
+		AddM2ToCAGroup(AxesGroup := CAGroup,
+			Axis                 := Mover2,
+			Execute              := TRUE,
+			IdentInGroup         := UDINT_TO_IDENTINGROUP(id := Mover2.NcToPlc.AxisId));
+
 		IF NOT AddM1ToCAGroup.Error AND NOT AddM2ToCAGroup.Error THEN
 			IF AddM1ToCAGroup.Done AND AddM2ToCAGroup.Done THEN
-				AddM1ToCAGroup(AxesGroup:=CAGroup , Axis:=Mover1 , Execute:=FALSE ); 
-				AddM2ToCAGroup(AxesGroup:=CAGroup , Axis:=Mover2 , Execute:=FALSE ); 
-				Step:=E_Step.EnableCA;
+				AddM1ToCAGroup(AxesGroup := CAGroup, Axis := Mover1, Execute := FALSE);
+				AddM2ToCAGroup(AxesGroup := CAGroup, Axis := Mover2, Execute := FALSE);
+				Step := E_Step.EnableCA;
 			END_IF
 		ELSE
-			Step:=E_Step.Error;
+			Step := E_Step.Error;
 		END_IF
-	
+
 	E_Step.EnableCA:
-		GroupEnable(
-			AxesGroup:=CAGroup , 
-			Execute:=TRUE);		
-			
+		GroupEnable(AxesGroup := CAGroup,
+			Execute           := TRUE);
+
 		IF NOT GroupEnable.Error THEN
 			IF GroupEnable.Done THEN
-				GroupEnable(AxesGroup:=CAGroup , Execute:=FALSE);		
-				Step:=E_Step.MoveSelectedMover;
+				GroupEnable(AxesGroup := CAGroup, Execute := FALSE);
+				Step := E_Step.MoveSelectedMover;
 			END_IF
 		ELSE
-			Step:=E_Step.Error;
+			Step := E_Step.Error;
 		END_IF
-		
-	E_Step.MoveSelectedMover:	
-		IF NumberOfMoversSelected >0 THEN
-			IF SelectedMovers[0].MoverIndex=0 THEN
-				SelectedAxis REF=Mover1;
-			ELSIF SelectedMovers[0].MoverIndex=1 THEN
-				SelectedAxis REF=Mover2;
+
+	E_Step.MoveSelectedMover:
+		IF NumberOfMoversSelected > 0 THEN
+			IF SelectedMovers[0].MoverIndex = 0 THEN
+				SelectedAxis REF= Mover1;
+			ELSIF SelectedMovers[0].MoverIndex = 1 THEN
+				SelectedAxis REF= Mover2;
 			ELSE
-				SelectedAxis REF=NullAxis;
+				SelectedAxis REF= NullAxis;
 			END_IF
 		ELSE
-			SelectedAxis REF=NullAxis;
+			SelectedAxis REF= NullAxis;
 		END_IF
-		
+
 		//Does not respect soft limits.
 		//Need to Min/Max the input
-		
-		DebounceTouch(IN:=NumTouches>0 AND (SelecteMoverCAMove.Position<>SingleFingerXPos));
+
+		DebounceTouch(IN := NumTouches > 0 AND (SelecteMoverCAMove.Position <> SingleFingerXPos));
+
 		IF DebounceTouch.Q THEN
-			IF SingleFingerXPos<42.0 THEN
-				SelecteMoverCAMove.Position:=42.0;
-			ELSIF SingleFingerXPos>460.0 THEN
-				SelecteMoverCAMove.Position:=460.0;
+			IF SingleFingerXPos < 42.0 THEN
+				SelecteMoverCAMove.Position := 42.0;
+			ELSIF SingleFingerXPos > 460.0 THEN
+				SelecteMoverCAMove.Position := 460.0;
 			ELSE
-				SelecteMoverCAMove.Position:=SingleFingerXPos;
+				SelecteMoverCAMove.Position := SingleFingerXPos;
 			END_IF
 		END_IF
 
-		SelecteMoverCAMove(
-			Axis:=SelectedAxis , 
-			Execute:=DebounceTouch.Q , 
-			ContinuousUpdate:=FALSE , 
-			Velocity:=500.0 , 
-			BufferMode:=MC_BUFFER_MODE.mcAborting, 
-			Direction:=Tc3_Mc3Definitions.MC_DIRECTION.mcDirectionNonModulo );	
-		
+		SelecteMoverCAMove(Axis := SelectedAxis,
+			Execute             := DebounceTouch.Q,
+			ContinuousUpdate    := FALSE,
+			Velocity            := 500.0,
+			BufferMode          := MC_BUFFER_MODE.mcAborting,
+			Direction           := Tc3_Mc3Definitions.MC_DIRECTION.mcDirectionNonModulo);
+
 		IF rtStop.Q THEN
 			Step := E_Step.HaltMovers;
 		END_IF
-		
+
 		IF GroupState.GroupErrorStop THEN
 			LogStepAndGoToErrorState(Step);
 		END_IF
-		
+
 	E_Step.HaltMovers:
-		GroupHalt(AxesGroup:=CAGroup , Execute:=TRUE);
-		
+		GroupHalt(AxesGroup := CAGroup, Execute := TRUE);
+
 		IF NOT GroupHalt.Error THEN
 			IF GroupHalt.Done THEN
-				GroupHalt(AxesGroup:=CAGroup,Execute:=FALSE);
+				GroupHalt(AxesGroup := CAGroup, Execute := FALSE);
 				Step := E_Step.DisableCA;
 			END_IF
 		ELSE
 			LogStepAndGoToErrorState(Step);
-		END_IF	
-		
-		
+		END_IF
+
 	E_Step.DisableCA:
-		GroupDisable(AxesGroup:=CAGroup , Execute:=TRUE);
-			
+		GroupDisable(AxesGroup := CAGroup, Execute := TRUE);
+
 		IF NOT GroupDisable.Error THEN
 			IF GroupDisable.Done THEN
-				GroupDisable(AxesGroup:=CAGroup,Execute:=FALSE);
+				GroupDisable(AxesGroup := CAGroup, Execute := FALSE);
 				Step := E_Step.RemoveAxisFromCA;
 			END_IF
 		ELSE
 			LogStepAndGoToErrorState(Step);
 		END_IF
-		
-	E_Step.RemoveAxisFromCA:		
-		RemoveM1FromGroup(
-			AxesGroup:= CAGroup, 
-			Execute:=TRUE , 
-			IdentInGroup:=UDINT_TO_IDENTINGROUP(Mover1.NcToPlc.AxisId));
 
-		RemoveM2FromGroup(
-			AxesGroup:= CAGroup, 
-			Execute:=TRUE , 
-			IdentInGroup:=UDINT_TO_IDENTINGROUP(Mover2.NcToPlc.AxisId));			
-			
-			IF NOT RemoveM1FromGroup.Error AND NOT RemoveM2FromGroup.Error THEN
-				IF RemoveM1FromGroup.Done AND RemoveM2FromGroup.Done THEN
-					RemoveM1FromGroup(AxesGroup:= CAGroup, Execute:=FALSE );
-					RemoveM2FromGroup(AxesGroup:= CAGroup, Execute:=FALSE );
-					Step := E_Step.Disable;
-				END_IF
-			ELSE
-				LogStepAndGoToErrorState(Step);
+	E_Step.RemoveAxisFromCA:
+		RemoveM1FromGroup(AxesGroup := CAGroup,
+			Execute                 := TRUE,
+			IdentInGroup            := UDINT_TO_IDENTINGROUP(Mover1.NcToPlc.AxisId));
+
+		RemoveM2FromGroup(AxesGroup := CAGroup,
+			Execute                 := TRUE,
+			IdentInGroup            := UDINT_TO_IDENTINGROUP(Mover2.NcToPlc.AxisId));
+
+		IF NOT RemoveM1FromGroup.Error AND NOT RemoveM2FromGroup.Error THEN
+			IF RemoveM1FromGroup.Done AND RemoveM2FromGroup.Done THEN
+				RemoveM1FromGroup(AxesGroup := CAGroup, Execute := FALSE);
+				RemoveM2FromGroup(AxesGroup := CAGroup, Execute := FALSE);
+				Step := E_Step.Disable;
 			END_IF
-		
+		ELSE
+			LogStepAndGoToErrorState(Step);
+		END_IF
+
 	E_Step.Disable:
-		MasterPower(Axis    := Master,Enable:=FALSE);
-		M1Power(Axis        := Mover1,Enable:=FALSE);
-		M2Power(Axis        := Mover2,Enable:=FALSE);
-		
+		MasterPower(Axis := Master, Enable := FALSE);
+		M1Power(Axis := Mover1, Enable := FALSE);
+		M2Power(Axis := Mover2, Enable := FALSE);
+
 		M_Status();
+
 		//Needs work this will not go into error state directly if power is removed and the axis is busy for some reason.
 		IF NOT OneOrMoreAxisInError THEN
 			IF AllAxisDisabled THEN
@@ -443,14 +439,65 @@ CASE Step OF
 	E_Step.Reset:
 		M_Reset();
 
-		IF NOT OneOrMoreAxisInError AND NOT GroupState.GroupErrorStop  THEN
+		IF NOT OneOrMoreAxisInError AND NOT GroupState.GroupErrorStop THEN
 			Step := E_Step.Init;
 		END_IF
 END_CASE
 
 M_Status();
-]]></ST>
+
+
+IoT();]]></ST>
     </Implementation>
+    <Method Name="IoT" Id="{0dd06caf-0599-4034-bd2a-8eb76b49595b}">
+      <Declaration><![CDATA[METHOD IoT
+VAR_INPUT
+END_VAR
+VAR_INST
+	fbIoT : FB_IotCommunicator := (
+    sHostName := '68.183.154.213', // MQTT Broker Adress
+	bRetain    :=FALSE,
+    nPort := 1883,                   // MQTT Port
+    sMainTopic := 'XTSDemo',          // Main Topic
+    sDeviceName := 'Demo Stand 1',  // Device Name
+    sUser := 'SmallXTSDemo',            // MQTT Username
+    sPassword := '');         // MQTT Password
+
+	stData: ST_IoTData;              // Values to send
+	timer : TON;                         // Timer to send data
+	
+END_VAR
+VAR
+	nDoubleCounter: INT;
+	SendMsg: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[fbIoT.Execute(TRUE);
+
+
+timer(IN := NOT timer.Q, PT := T#100MS);
+
+IF fbIoT.bConnected AND timer.Q THEN
+	stData.StartButton:=IotStartButton;
+	stData.Mover1ActPos:=Mover1.NcToPlc.ActPos;
+	stData.Mover2ActPos:=Mover2.NcToPlc.ActPos;
+    fbIoT.SendData(ADR(stData), SIZEOF(stData));
+END_IF
+
+
+IF fbIoT.fbCommand.bAvailable THEN
+    IF fbIoT.fbCommand.sVarName = 'StartButton' THEN
+        fbIoT.fbCommand.GetValue(ADR(stData.StartButton), SIZEOF(stData.StartButton), E_IotCommunicatorDatatype.type_BOOL);
+		IotStartButton:=stData.StartButton;
+    END_IF
+    fbIoT.fbCommand.Remove();
+END_IF
+
+IF SendMsg THEN
+	fbIoT.SendMessage('This is a test alarm message!');
+END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="M_Init" Id="{257208cf-25b2-41df-bdd8-38f0ee217f4b}">
       <Declaration><![CDATA[METHOD M_Init : BOOL
 VAR_INPUT
@@ -473,8 +520,8 @@ GroupReset(AxesGroup := CAGroup, Execute := FALSE);
 GroupDisable(AxesGroup := CAGroup, Execute := FALSE);
 GroupHalt(AxesGroup := CAGroup, Execute := FALSE);
 
-RemoveM1FromGroup(AxesGroup:= CAGroup, Execute:=FALSE); 
-RemoveM2FromGroup(AxesGroup:= CAGroup, Execute:=FALSE); 
+RemoveM1FromGroup(AxesGroup := CAGroup, Execute := FALSE);
+RemoveM2FromGroup(AxesGroup := CAGroup, Execute := FALSE);
 
 SelecteMoverCAMove(Axis := SelectedAxis, Execute := FALSE);
 
@@ -587,23 +634,22 @@ Mover2.ReadStatus();
 
 OneOrMoreAxisInError := Master.Status.Error OR Mover1.Status.Error OR Mover2.Status.Error;
 
-GroupState(
-	AxesGroup:=CAGroup , 
-	Enable:=TRUE , 
-	Valid=> , 
-	Busy=> , 
-	GroupMoving=> , 
-	GroupHoming=> , 
-	GroupErrorStop=> , 
-	GroupNotReady=> , 
-	GroupStandby=> , 
-	GroupStopping=> , 
-	GroupDisabled=> , 
-	AllAxesStanding=> , 
-	ConstantVelocity=> , 
-	Accelerating=> , 
-	Decelerating=> , 
-	InPosition=>  );]]></ST>
+GroupState(AxesGroup := CAGroup,
+	Enable           := TRUE,
+	Valid            =>,
+	Busy             =>,
+	GroupMoving      =>,
+	GroupHoming      =>,
+	GroupErrorStop   =>,
+	GroupNotReady    =>,
+	GroupStandby     =>,
+	GroupStopping    =>,
+	GroupDisabled    =>,
+	AllAxesStanding  =>,
+	ConstantVelocity =>,
+	Accelerating     =>,
+	Decelerating     =>,
+	InPosition       =>);]]></ST>
       </Implementation>
     </Method>
     <Method Name="M_UserInput" Id="{c3087039-f600-4463-a24a-4a070ff6bad0}">
@@ -624,7 +670,7 @@ VAR_INST
 	sSelectedMoversOld : STRING(1000);
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[tonButtonDebounce(IN := Button, PT := T#100MS);
+        <ST><![CDATA[tonButtonDebounce(IN := Button OR IotStartButton, PT := T#100MS);
 rtButton(CLK := tonButtonDebounce.Q);
 
 //Set back to auto mode, if using the physical button
@@ -679,114 +725,43 @@ END_IF
       </Implementation>
     </Method>
     <LineIds Name="FB_Demo">
-      <LineId Id="2714" Count="16" />
-      <LineId Id="3351" Count="0" />
-      <LineId Id="3353" Count="1" />
-      <LineId Id="3352" Count="0" />
-      <LineId Id="2731" Count="32" />
-      <LineId Id="3295" Count="0" />
-      <LineId Id="2765" Count="141" />
-      <LineId Id="3013" Count="1" />
-      <LineId Id="3019" Count="4" />
-      <LineId Id="3038" Count="0" />
-      <LineId Id="3030" Count="4" />
-      <LineId Id="3039" Count="1" />
-      <LineId Id="3043" Count="0" />
-      <LineId Id="3052" Count="0" />
-      <LineId Id="3049" Count="0" />
-      <LineId Id="3053" Count="0" />
-      <LineId Id="3046" Count="2" />
-      <LineId Id="3044" Count="0" />
-      <LineId Id="3041" Count="0" />
-      <LineId Id="3056" Count="0" />
-      <LineId Id="3058" Count="2" />
-      <LineId Id="3064" Count="2" />
-      <LineId Id="3073" Count="0" />
-      <LineId Id="3068" Count="3" />
-      <LineId Id="3067" Count="0" />
-      <LineId Id="3077" Count="0" />
-      <LineId Id="3042" Count="0" />
-      <LineId Id="3101" Count="1" />
-      <LineId Id="3104" Count="0" />
-      <LineId Id="3106" Count="1" />
-      <LineId Id="3109" Count="1" />
-      <LineId Id="3105" Count="0" />
-      <LineId Id="3116" Count="0" />
-      <LineId Id="3114" Count="0" />
-      <LineId Id="3103" Count="0" />
-      <LineId Id="3119" Count="2" />
-      <LineId Id="3118" Count="0" />
-      <LineId Id="3099" Count="0" />
-      <LineId Id="3362" Count="0" />
-      <LineId Id="3369" Count="2" />
-      <LineId Id="3374" Count="0" />
-      <LineId Id="3377" Count="1" />
-      <LineId Id="3375" Count="0" />
-      <LineId Id="3364" Count="1" />
-      <LineId Id="3081" Count="3" />
-      <LineId Id="3086" Count="0" />
-      <LineId Id="3091" Count="1" />
-      <LineId Id="3080" Count="0" />
-      <LineId Id="3210" Count="1" />
-      <LineId Id="3209" Count="0" />
-      <LineId Id="3278" Count="3" />
-      <LineId Id="3232" Count="1" />
-      <LineId Id="3236" Count="0" />
-      <LineId Id="3256" Count="0" />
-      <LineId Id="3246" Count="0" />
-      <LineId Id="3248" Count="0" />
-      <LineId Id="3254" Count="0" />
-      <LineId Id="3249" Count="3" />
-      <LineId Id="3247" Count="0" />
-      <LineId Id="3294" Count="0" />
-      <LineId Id="3293" Count="0" />
-      <LineId Id="3075" Count="0" />
-      <LineId Id="3216" Count="0" />
-      <LineId Id="3222" Count="2" />
-      <LineId Id="3228" Count="0" />
-      <LineId Id="3257" Count="0" />
-      <LineId Id="3227" Count="0" />
-      <LineId Id="3230" Count="1" />
-      <LineId Id="3225" Count="0" />
-      <LineId Id="3317" Count="0" />
-      <LineId Id="3306" Count="0" />
-      <LineId Id="3322" Count="3" />
-      <LineId Id="3338" Count="3" />
-      <LineId Id="3337" Count="0" />
-      <LineId Id="3329" Count="2" />
-      <LineId Id="3357" Count="0" />
-      <LineId Id="3355" Count="0" />
-      <LineId Id="3333" Count="3" />
-      <LineId Id="3332" Count="0" />
-      <LineId Id="3260" Count="0" />
-      <LineId Id="2908" Count="1" />
-      <LineId Id="3302" Count="3" />
-      <LineId Id="2912" Count="22" />
+      <LineId Id="3472" Count="347" />
+      <LineId Id="3911" Count="1" />
       <LineId Id="99" Count="0" />
     </LineIds>
+    <LineIds Name="FB_Demo.IoT">
+      <LineId Id="5" Count="0" />
+      <LineId Id="18" Count="4" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="42" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="25" Count="4" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="32" Count="1" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="39" Count="1" />
+    </LineIds>
     <LineIds Name="FB_Demo.M_Init">
-      <LineId Id="542" Count="13" />
-      <LineId Id="559" Count="0" />
-      <LineId Id="600" Count="0" />
-      <LineId Id="560" Count="0" />
-      <LineId Id="601" Count="0" />
-      <LineId Id="561" Count="33" />
+      <LineId Id="606" Count="51" />
       <LineId Id="5" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Power">
-      <LineId Id="436" Count="17" />
+      <LineId Id="461" Count="17" />
       <LineId Id="75" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Reset">
-      <LineId Id="202" Count="21" />
+      <LineId Id="227" Count="21" />
       <LineId Id="188" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_Status">
-      <LineId Id="143" Count="4" />
-      <LineId Id="151" Count="17" />
+      <LineId Id="172" Count="20" />
+      <LineId Id="168" Count="0" />
     </LineIds>
     <LineIds Name="FB_Demo.M_UserInput">
-      <LineId Id="509" Count="50" />
+      <LineId Id="575" Count="50" />
       <LineId Id="97" Count="0" />
     </LineIds>
   </POU>

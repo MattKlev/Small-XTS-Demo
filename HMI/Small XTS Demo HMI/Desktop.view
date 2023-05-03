@@ -6,43 +6,49 @@
 "divider",
 "divider-left"
 ]
-</script><script data-tchmi-target-attribute="data-tchmi-navigation-structure" type="application/json">[
-{
- "name": "%l%L_XTS%/l%",
- "content": "Pages/XTS.content",
- "icon_a": "%tr%TR_Icon_XTS_active%/tr%",
- "icon_n": "%tr%TR_Icon_XTS_normal%/tr%",
- "icon_p": "%tr%TR_Icon_XTS_pressed%/tr%"
-},
-{
- "name": "%l%L_Scope%/l%",
- "content": "Pages/Scope.content",
- "icon_a": "%tr%TR_Icon_Scope_active%/tr%",
- "icon_n": "%tr%TR_Icon_Scope_normal%/tr%",
- "icon_p": "%tr%TR_Icon_Scope_pressed%/tr%"
-},
-{
- "name": "%l%L_Events%/l%",
- "content": "Pages/Events.content",
- "icon_a": "%tr%TR_Icon_Events_active%/tr%",
- "icon_n": "%tr%TR_Icon_Events_normal%/tr%",
- "icon_p": "%tr%TR_Icon_Events_pressed%/tr%"
-},
-{
- "name": "%l%L_Settings%/l%",
- "content": "Pages/Settings.content",
- "icon_a": "%tr%TR_Icon_Settings_active%/tr%",
- "icon_n": "%tr%TR_Icon_Settings_normal%/tr%",
- "icon_p": "%tr%TR_Icon_Settings_pressed%/tr%"
-},
-{
- "name": "%l%L_EtherCATDiagnostics%/l%",
- "content": "Pages/EtherCATDiagnostics.content",
- "icon_a": "%tr%TR_Icon_EtherCATDiagnostics_active%/tr%",
- "icon_n": "%tr%TR_Icon_EtherCATDiagnostics_normal%/tr%",
- "icon_p": "%tr%TR_Icon_EtherCATDiagnostics_pressed%/tr%"
-}
-]</script></div><div id="Header_Top" data-tchmi-type="TcHmi.Controls.BaseTemplate.TcHmiHeader" data-tchmi-height="80" data-tchmi-left="%ctrl%Navigation_Left::Width%/ctrl%" data-tchmi-top="0" data-tchmi-right="0">
+</script><script data-tchmi-target-attribute="data-tchmi-navigation-structure" type="application/json">
+[
+  {
+    "name": "%l%L_XTS%/l%",
+    "content": "Pages/XTS.content",
+    "icon_a": "%tr%TR_Icon_XTS_active%/tr%",
+    "icon_n": "%tr%TR_Icon_XTS_normal%/tr%",
+    "icon_p": "%tr%TR_Icon_XTS_pressed%/tr%"
+  },
+  {
+    "name": "%l%L_Scope%/l%",
+    "content": "Pages/Scope.content",
+    "icon_a": "%tr%TR_Icon_Scope_active%/tr%",
+    "icon_n": "%tr%TR_Icon_Scope_normal%/tr%",
+    "icon_p": "%tr%TR_Icon_Scope_pressed%/tr%"
+  },
+  {
+    "name": "%l%L_Events%/l%",
+    "content": "Pages/Events.content",
+    "icon_a": "%tr%TR_Icon_Events_active%/tr%",
+    "icon_n": "%tr%TR_Icon_Events_normal%/tr%",
+    "icon_p": "%tr%TR_Icon_Events_pressed%/tr%"
+  },
+  {
+    "name": "%l%L_Settings%/l%",
+    "content": "Pages/Settings.content",
+    "icon_a": "%tr%TR_Icon_Settings_active%/tr%",
+    "icon_n": "%tr%TR_Icon_Settings_normal%/tr%",
+    "icon_p": "%tr%TR_Icon_Settings_pressed%/tr%"
+  },
+  {
+    "name": "%l%L_EtherCATDiagnostics%/l%",
+    "content": "Pages/EtherCATDiagnostics.content",
+    "icon_a": "%tr%TR_Icon_EtherCATDiagnostics_active%/tr%",
+    "icon_n": "%tr%TR_Icon_EtherCATDiagnostics_normal%/tr%",
+    "icon_p": "%tr%TR_Icon_EtherCATDiagnostics_pressed%/tr%"
+  },
+  {
+    "name": "%l%L_IoT%/l%",
+    "content": "Pages/IoT.content"
+  }
+]
+</script></div><div id="Header_Top" data-tchmi-type="TcHmi.Controls.BaseTemplate.TcHmiHeader" data-tchmi-height="80" data-tchmi-left="%ctrl%Navigation_Left::Width%/ctrl%" data-tchmi-top="0" data-tchmi-right="0">
 <script data-tchmi-target-attribute="data-tchmi-class-names" type="application/json">[
 "divider",
 "divider-top"
@@ -171,11 +177,11 @@
     "itemType": "UserManagement",
     "priority": "3",
     "itemAlign": "Right",
-    "prefWidth": 288.0,
+    "prefWidth": 320.0,
     "prefWidthUnit": "px",
     "prefHeight": 48.0,
     "prefHeightUnit": "px",
-    "minWidth": 176.0,
+    "minWidth": 128.0,
     "minWidthUnit": "px",
     "classList": [],
     "accessRights": [],
